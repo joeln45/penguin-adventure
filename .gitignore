@@ -22,3 +22,6 @@ Thumbs.db
 
 # Local env files
 .env
+
+# Local-only media (hero video is hosted via GitHub user-attachments)
+docs/media/*.mp4
