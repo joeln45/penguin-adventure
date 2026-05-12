@@ -179,7 +179,10 @@ public class Animation {
      */
     public void loadAnimationFromSheet(String fileName, int columns, int rows, int frameDuration)
     {
-    	Image sheet = new ImageIcon(fileName).getImage();
+    	java.net.URL url = getClass().getClassLoader().getResource(fileName);
+    	Image sheet = (url != null)
+    			? new ImageIcon(url).getImage()
+    			: new ImageIcon(fileName).getImage();
     	Image[] images = getImagesFromSheet(sheet, columns, rows);
     	
     	for (int i=0; i<images.length; i++)

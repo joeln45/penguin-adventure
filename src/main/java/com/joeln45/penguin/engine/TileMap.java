@@ -152,7 +152,11 @@ public class TileMap
 					// and it's file name
 					String fileName = trimmed.substring(3,trimmed.length());
 					
-					Image img  = new ImageIcon(folder + "/" + fileName).getImage();
+					String resourcePath = folder + "/" + fileName;
+					java.net.URL imgUrl = getClass().getClassLoader().getResource(resourcePath);
+					Image img = (imgUrl != null)
+							? new ImageIcon(imgUrl).getImage()
+							: new ImageIcon(resourcePath).getImage();
 					// Now add this character->image mapping to the map
 					if (img != null)
 						imagemap.put(ch,img);
