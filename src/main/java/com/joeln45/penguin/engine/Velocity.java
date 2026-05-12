@@ -1,4 +1,4 @@
-package game2D;
+package com.joeln45.penguin.engine;
 
 /**
 	The Velocity class provides the ability to manipulate and specify a

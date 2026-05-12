@@ -1,4 +1,4 @@
-package game2D;
+package com.joeln45.penguin.engine;
 
 import java.io.*;
 

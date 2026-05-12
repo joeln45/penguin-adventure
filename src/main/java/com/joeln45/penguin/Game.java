@@ -1,9 +1,12 @@
+package com.joeln45.penguin;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import game2D.*;
+
+import com.joeln45.penguin.engine.*;
 
 /**
  * The Game class extends the GameCore class to create a custom game.
