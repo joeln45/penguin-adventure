@@ -2,6 +2,7 @@
 
 > A 2D platformer in Java — guide a penguin across icy levels, dodge enemies, collect stars, and reach the igloo.
 
+[![build](https://github.com/joeln45/penguin-adventure/actions/workflows/build.yml/badge.svg)](https://github.com/joeln45/penguin-adventure/actions/workflows/build.yml)
 ![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)
 ![Build](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -67,7 +68,7 @@ This started as a Year-3 university coursework project. Modernising it taught me
 
 - [x] Maven build + classpath resources
 - [x] README v1 + screenshots
-- [ ] GitHub Actions CI
+- [x] GitHub Actions CI
 - [ ] Refactor `Game.java` into `Player`, `EnemyManager`, `CollisionService`, etc.
 - [ ] JUnit 5 tests for collision & sound filters
 - [ ] Double-jump powerup
