@@ -4,6 +4,8 @@ import java.io.*;
 
 /**
  * A filter that boosts or decreases the volume of audio samples.
+ *
+ * @author Joel Nirmal
  */
 public class VolumeBoostFilter extends SoundFilter {
     private float boostFactor; // The factor by which to boost the volume

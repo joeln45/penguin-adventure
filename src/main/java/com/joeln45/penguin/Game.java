@@ -9,13 +9,17 @@ import java.util.ArrayList;
 import com.joeln45.penguin.engine.*;
 
 /**
- * The Game class extends the GameCore class to create a custom game.
- * It handles the initialization, game logic, rendering, and user input.
- * This class includes features such as parallax scrolling, collision detection,
- * and level progression.
+ * Penguin Adventure — the main game class.
+ *
+ * <p>Extends {@link com.joeln45.penguin.engine.GameCore} to implement a 2D
+ * platformer: parallax-scrolling backgrounds, tile-based levels, animated
+ * sprites, collision detection, a lives system, and filtered sound effects.
+ *
+ * <p>Originally written as coursework for the CSCU9N6 module at the
+ * University of Stirling and since modernised as a portfolio project.
+ *
+ * @author Joel Nirmal
  */
-// Student ID: 3141744
-
 @SuppressWarnings("serial")
 public class Game extends GameCore {
     // Useful game constants

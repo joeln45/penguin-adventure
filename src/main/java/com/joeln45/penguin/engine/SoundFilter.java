@@ -4,6 +4,8 @@ import java.io.*;
 
 /**
  * An abstract base class for sound filters that modify audio streams.
+ *
+ * @author Joel Nirmal
  */
 public abstract class SoundFilter extends FilterInputStream {
 

@@ -4,6 +4,8 @@ import java.io.*;
 
 /**
  * A filter that gradually increases the volume of audio samples (fade-in effect).
+ *
+ * @author Joel Nirmal
  */
 public class FadeInFilter extends SoundFilter {
     private float currentVolume = 0.0f; // Current volume level

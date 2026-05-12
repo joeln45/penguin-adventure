@@ -4,6 +4,8 @@ import java.io.*;
 
 /**
  * A filter that adds an echo effect to sound.
+ *
+ * @author Joel Nirmal
  */
 public class EchoFilter extends SoundFilter {
     private short[] delayBuffer; // Buffer to store delayed samples
