@@ -36,10 +36,6 @@
                 <version>3.5.0</version>
                 <configuration>
                     <mainClass>${main.class}</mainClass>
-                    <!-- Temporary: relative resource paths (e.g. "images/heart.png") still
-                         work because we run with the working dir set to the resources root.
-                         A follow-up commit switches the code to true classpath loading. -->
-                    <workingDirectory>${project.basedir}/src/main/resources</workingDirectory>
                 </configuration>
             </plugin>
 

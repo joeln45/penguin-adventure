@@ -96,9 +96,15 @@ public abstract class GameCore extends JFrame implements KeyListener {
      * @param fileName The file path to the image file that should be loaded 
      * @return A reference to the Image object that was loaded
      */
-    public Image loadImage(String fileName) 
-    { 
-    	return new ImageIcon(fileName).getImage(); 
+    public Image loadImage(String fileName)
+    {
+        java.net.URL url = getClass().getClassLoader().getResource(fileName);
+        if (url != null) {
+            return new ImageIcon(url).getImage();
+        }
+        // Fallback: resolve as a filesystem path (useful when running from a
+        // working directory that contains the resources, e.g. legacy launches).
+        return new ImageIcon(fileName).getImage();
     }
 
     /**

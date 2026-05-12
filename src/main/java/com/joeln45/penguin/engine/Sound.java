@@ -84,8 +84,11 @@ public class Sound extends Thread {
      * @throws Exception If an error occurs while playing the file.
      */
     private void playWavFile() throws Exception {
-        File file = new File(filename);
-        AudioInputStream stream = AudioSystem.getAudioInputStream(file);
+        InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(filename);
+        InputStream source = (resourceStream != null)
+                ? new BufferedInputStream(resourceStream)
+                : new BufferedInputStream(new FileInputStream(filename));
+        AudioInputStream stream = AudioSystem.getAudioInputStream(source);
         AudioFormat audio_format = stream.getFormat();
 
         // Apply filter if one was specified
@@ -127,8 +130,11 @@ public class Sound extends Thread {
      * @throws Exception If an error occurs while playing the file.
      */
     private void playMidiFile() throws Exception {
-        File midiFile = new File(filename);
-        Sequence sequence = MidiSystem.getSequence(midiFile);
+        InputStream resourceStream = getClass().getClassLoader().getResourceAsStream(filename);
+        InputStream source = (resourceStream != null)
+                ? new BufferedInputStream(resourceStream)
+                : new BufferedInputStream(new FileInputStream(filename));
+        Sequence sequence = MidiSystem.getSequence(source);
         Sequencer sequencer = MidiSystem.getSequencer();
         sequencer.open();
         sequencer.setSequence(sequence);

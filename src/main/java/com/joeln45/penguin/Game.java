@@ -96,6 +96,19 @@ public class Game extends GameCore {
      *
      * @param args Command-line arguments (not used in this program)
      */
+    /**
+     * Opens a bundled resource (under src/main/resources) as a stream so the
+     * game runs identically from an IDE or a packaged JAR. Falls back to
+     * the filesystem only if the classpath lookup fails.
+     */
+    private static java.io.InputStream openResource(String name) throws java.io.FileNotFoundException {
+        java.io.InputStream in = Game.class.getClassLoader().getResourceAsStream(name);
+        if (in != null) {
+            return in;
+        }
+        return new java.io.FileInputStream(name);
+    }
+
     public static void main(String[] args) {
 
         Sound backgroundMusic = new Sound("sounds/background_music.mid");
@@ -677,7 +690,7 @@ public class Game extends GameCore {
         if (jump && canJump) {
             // Play the jump sound here with EchoFilter
             try {
-                Sound jumpSound = new Sound("sounds/jump.wav", new EchoFilter(new FileInputStream("sounds/jump.wav"), 100, 0.5f, 44100)); // 100ms delay, 0.5 decay
+                Sound jumpSound = new Sound("sounds/jump.wav", new EchoFilter(openResource("sounds/jump.wav"), 100, 0.5f, 44100)); // 100ms delay, 0.5 decay
                 jumpSound.start();
             } catch (FileNotFoundException e) {
                 e.printStackTrace(); 
@@ -795,7 +808,7 @@ public class Game extends GameCore {
                 lives--;
                 // Plays attack sound when player gets damaged
                 try {
-                    Sound attackSound = new Sound("sounds/attack.wav", new VolumeBoostFilter(new FileInputStream("sounds/attack.wav"), 0.25f)); // 50% volume boost
+                    Sound attackSound = new Sound("sounds/attack.wav", new VolumeBoostFilter(openResource("sounds/attack.wav"), 0.25f)); // 50% volume boost
                     attackSound.start();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace(); 
@@ -828,7 +841,7 @@ public class Game extends GameCore {
                     gameCompleted = true;
                     // Play level complete sound 
                     try {
-                        Sound levelCompleteSound = new Sound("sounds/level_complete.wav", new FadeInFilter(new FileInputStream("sounds/level_complete.wav"), 2000, 44100)); // 1 second fade-in
+                        Sound levelCompleteSound = new Sound("sounds/level_complete.wav", new FadeInFilter(openResource("sounds/level_complete.wav"), 2000, 44100)); // 1 second fade-in
                         levelCompleteSound.start();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace(); 
@@ -836,7 +849,7 @@ public class Game extends GameCore {
                 } else {
                     // Play level complete sound 
                     try {
-                        Sound levelCompleteSound = new Sound("sounds/level_complete.wav", new FadeInFilter(new FileInputStream("sounds/level_complete.wav"), 2000, 44100)); // 1 second fade-in
+                        Sound levelCompleteSound = new Sound("sounds/level_complete.wav", new FadeInFilter(openResource("sounds/level_complete.wav"), 2000, 44100)); // 1 second fade-in
                         levelCompleteSound.start();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();

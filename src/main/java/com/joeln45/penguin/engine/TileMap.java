@@ -106,7 +106,10 @@ public class TileMap
 		
 		try
 		{
-			BufferedReader in = new BufferedReader(new FileReader(path));
+			InputStream is = getClass().getClassLoader().getResourceAsStream(path);
+			BufferedReader in = (is != null)
+					? new BufferedReader(new InputStreamReader(is))
+					: new BufferedReader(new FileReader(path));
 			String line="";
 			String trimmed="";
 			String [] vals;
