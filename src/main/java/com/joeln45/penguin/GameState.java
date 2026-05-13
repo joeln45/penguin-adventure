@@ -19,15 +19,24 @@ public final class GameState {
     public boolean levelCompleted = false;
     public boolean isFlickering = false;
     public boolean isMuted = false;
-    public int lives = 2;
+    public static final int LIVES_PER_LEVEL = 3;
+
+    public int lives = LIVES_PER_LEVEL;
     public long flickerStartTime = 0;
 
     /** Reset the per-run flags to the start-of-game defaults (called on new game / restart). */
     public void resetForNewGame() {
         levelCompleted = false;
-        lives = 2;
+        lives = LIVES_PER_LEVEL;
         gameOver = false;
         gameCompleted = false;
+        gameOverSoundPlayed = false;
+        isFlickering = false;
+    }
+
+    /** Reset only the per-level flags (called when crossing into the next level). */
+    public void resetForNewLevel() {
+        lives = LIVES_PER_LEVEL;
         gameOverSoundPlayed = false;
         isFlickering = false;
     }

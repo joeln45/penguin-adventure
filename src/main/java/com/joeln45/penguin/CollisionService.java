@@ -142,10 +142,12 @@ public final class CollisionService {
             }
 
             if (localHorizontalCollision) {
+                // Snap to integer pixel positions to avoid sub-pixel jitter
+                // when the sprite width is non-integer.
                 if (velocityX > 0) {
-                    s.setX(tileX * tileWidth - sw);
+                    s.setX((float) Math.floor(tileX * tileWidth - sw));
                 } else {
-                    s.setX((tileX + 1) * tileWidth);
+                    s.setX((float) Math.ceil((tileX + 1) * tileWidth));
                 }
                 s.setSpeedX(0);
                 horizontalCollision = true;
@@ -175,12 +177,13 @@ public final class CollisionService {
             }
 
             if (verticalCollision) {
+                // Snap to integer pixel positions for stable resting on ledges.
                 if (velocityY > 0) {
-                    s.setY(tileY * tileHeight - sh);
+                    s.setY((float) Math.floor(tileY * tileHeight - sh));
                     s.setVelocityY(0);
                     landed = true;
                 } else {
-                    s.setY((tileY + 1) * tileHeight);
+                    s.setY((float) Math.ceil((tileY + 1) * tileHeight));
                     s.setVelocityY(0);
                 }
             }
