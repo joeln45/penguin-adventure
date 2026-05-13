@@ -45,7 +45,7 @@ public final class LevelManager {
 
     /** Load the very first level (called on a new game). */
     public void loadFirstLevel(CollectibleManager collectibles, EnemyManager enemies,
-                               PowerupManager powerups) {
+                               PowerupManager powerups, HawkManager hawks) {
         currentLevel = FIRST_LEVEL;
         tmap.loadMap("maps", "map1.txt");
         setBoundaries(20, 2035, 65, 480);
@@ -54,11 +54,12 @@ public final class LevelManager {
         enemies.loadLevel(currentLevel);
         powerups.loadLevel(currentLevel);
         powerups.deactivate();
+        hawks.loadLevel(currentLevel);
     }
 
     /** Advance to the next level (currently a fixed level-2 transition). */
     public void loadNextLevel(CollectibleManager collectibles, EnemyManager enemies,
-                              PowerupManager powerups) {
+                              PowerupManager powerups, HawkManager hawks) {
         currentLevel++;
         tmap.loadMap("maps", "map" + currentLevel + ".txt");
         setBoundaries(20, 2035, 65, 480);
@@ -66,16 +67,18 @@ public final class LevelManager {
         collectibles.loadLevel(currentLevel);
         enemies.loadLevel(currentLevel);
         powerups.loadLevel(currentLevel);
+        hawks.loadLevel(currentLevel);
     }
 
     /** Reload the current level's collectibles/enemies/igloo without bumping the counter. */
     public void reloadCurrent(CollectibleManager collectibles, EnemyManager enemies,
-                              PowerupManager powerups) {
+                              PowerupManager powerups, HawkManager hawks) {
         positionIgloo();
         collectibles.loadLevel(currentLevel);
         enemies.loadLevel(currentLevel);
         powerups.loadLevel(currentLevel);
         powerups.deactivate();
+        hawks.loadLevel(currentLevel);
     }
 
     private void positionIgloo() {

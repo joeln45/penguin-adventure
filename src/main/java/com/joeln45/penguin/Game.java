@@ -57,6 +57,7 @@ public class Game extends GameCore {
     CollectibleManager collectibles = new CollectibleManager();
     EnemyManager enemyMgr = new EnemyManager();
     PowerupManager powerups = new PowerupManager();
+    HawkManager hawks = new HawkManager();
     LevelManager levelMgr;
     // Aliases (set after levelMgr is constructed) so existing call sites keep compiling
     TileMap tmap;
@@ -166,7 +167,7 @@ public class Game extends GameCore {
         canJump = false;
         wasOnGround = false;
         state.resetForNewGame();
-        levelMgr.loadFirstLevel(collectibles, enemyMgr, powerups);
+        levelMgr.loadFirstLevel(collectibles, enemyMgr, powerups, hawks);
     }
 
     /**
@@ -209,6 +210,7 @@ public class Game extends GameCore {
         // Draw stars and enemies via their managers
         collectibles.draw(g, xo, yo, input.isDebug());
         enemyMgr.draw(g, xo, yo, input.isDebug());
+        hawks.draw(g, xo, yo, input.isDebug());
         powerups.draw(g, xo, yo);
 
         HudRenderer.drawStarCounter(g, collectibles.getStarsCollected(), collectibles.total());
@@ -392,7 +394,9 @@ public class Game extends GameCore {
         powerups.update(elapsed, player);
 
         // Update enemies (movement + player hit detection)
-        if (enemyMgr.update(elapsed, player, tmap)) {
+        boolean enemyHit = enemyMgr.update(elapsed, player, tmap);
+        boolean hawkHit = hawks.update(elapsed, player);
+        if (enemyHit || hawkHit) {
             state.lives--;
             try {
                 AssetLoader.attackSound().start();
@@ -429,7 +433,7 @@ public class Game extends GameCore {
                     canJump = false;
                     wasOnGround = false;
                     state.gameOverSoundPlayed = false;
-                    levelMgr.loadNextLevel(collectibles, enemyMgr, powerups);
+                    levelMgr.loadNextLevel(collectibles, enemyMgr, powerups, hawks);
                     state.levelCompleted = false;
                 }
             }
@@ -504,7 +508,7 @@ public class Game extends GameCore {
                     state.levelCompleted = false;
                     playerObj.respawn(100, 475);
                     state.lives = 2;
-                    levelMgr.reloadCurrent(collectibles, enemyMgr, powerups);
+                    levelMgr.reloadCurrent(collectibles, enemyMgr, powerups, hawks);
                 }
             }
         }
