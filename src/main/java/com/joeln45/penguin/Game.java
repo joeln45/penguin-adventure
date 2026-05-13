@@ -40,9 +40,9 @@ public class Game extends GameCore {
     static final long FLICKER_DURATION_MS = 2000;
 
     // Menu button variables
-    Rectangle startButton;
-    Rectangle playAgain_Button; 
-    Rectangle restartGame_Button; 
+    Rectangle[] levelButtons = new Rectangle[3]; // index 0 = level 1, etc.
+    Rectangle playAgain_Button;
+    Rectangle restartGame_Button;
     Font menu_font;
     Font instruction_Font;
 
@@ -104,20 +104,25 @@ public class Game extends GameCore {
         menu_font = new Font("Arial", Font.BOLD, 48);
         instruction_Font = new Font("Arial", Font.PLAIN, 20);
         
-        // Create start button (position: left-middle of the screen)
-        int buttonWidth = 200;
-        int buttonHeight = 60;
-        int buttonX = screenWidth / 4;  // Positioned at 1/6 of screen width
-        int buttonY = 300;  // Centered vertically
-        startButton = new Rectangle(buttonX, buttonY, buttonWidth, buttonHeight);
+        // Three level-select buttons stacked vertically on the left half of the menu
+        int buttonWidth = 240;
+        int buttonHeight = 56;
+        int buttonX = screenWidth / 4 - buttonWidth / 2 + 60; // left-of-centre block
+        int firstButtonY = 260;
+        int buttonGap = 16;
+        for (int i = 0; i < 3; i++) {
+            levelButtons[i] = new Rectangle(buttonX,
+                                            firstButtonY + i * (buttonHeight + buttonGap),
+                                            buttonWidth, buttonHeight);
+        }
 
-        // play again button 
-        playAgain_Button = new Rectangle((screenWidth - buttonWidth) / 2, 
+        // play again button
+        playAgain_Button = new Rectangle((screenWidth - buttonWidth) / 2,
                                    (screenHeight - buttonHeight) / 2 + 50,
                                    buttonWidth, buttonHeight);
 
         // restart game button
-        restartGame_Button = new Rectangle((screenWidth - buttonWidth) / 2, 
+        restartGame_Button = new Rectangle((screenWidth - buttonWidth) / 2,
                                    (screenHeight - buttonHeight) / 2 + 50,
                                    buttonWidth, buttonHeight);
 
@@ -162,12 +167,16 @@ public class Game extends GameCore {
      * This method is called when starting a new game or restarting a level.
      */
     public void initialiseGame() {
-        playerObj.respawn(100, 475);
+        initialiseGame(1);
+    }
 
+    /** Start (or restart) the game at a specific level number. */
+    public void initialiseGame(int level) {
+        playerObj.respawn(100, 475);
         canJump = false;
         wasOnGround = false;
         state.resetForNewGame();
-        levelMgr.loadFirstLevel(collectibles, enemyMgr, powerups, hawks);
+        levelMgr.loadLevel(level, collectibles, enemyMgr, powerups, hawks);
     }
 
     /**
@@ -275,21 +284,28 @@ public class Game extends GameCore {
         g.setColor(Color.WHITE);
         g.drawString(title, titleX - 2, titleY - 2);
 
-        // Drawing start button with hover effect 
-        g.setColor(new Color(70, 130, 180, 200)); 
-        g.fillRoundRect(startButton.x, startButton.y, startButton.width, startButton.height, 15, 15);
-        // Button border
-        g.setColor(new Color(255, 255, 255, 150));
-        g.setStroke(new BasicStroke(2));
-        g.drawRoundRect(startButton.x, startButton.y, startButton.width, startButton.height, 15, 15);
-        
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 28));
-        String startText = "Start Game";
+        // Drawing three level-select buttons
+        g.setFont(new Font("Arial", Font.BOLD, 24));
         fontMetric = g.getFontMetrics();
-        int startX = startButton.x + (startButton.width - fontMetric.stringWidth(startText)) / 2;
-        int startY = startButton.y + (startButton.height + fontMetric.getAscent()) / 2;
-        g.drawString(startText, startX, startY);
+        for (int i = 0; i < 3; i++) {
+            Rectangle btn = levelButtons[i];
+
+            // Button background
+            g.setColor(new Color(70, 130, 180, 200));
+            g.fillRoundRect(btn.x, btn.y, btn.width, btn.height, 15, 15);
+
+            // Button border
+            g.setColor(new Color(255, 255, 255, 150));
+            g.setStroke(new BasicStroke(2));
+            g.drawRoundRect(btn.x, btn.y, btn.width, btn.height, 15, 15);
+
+            // Button label
+            g.setColor(Color.WHITE);
+            String label = "Level " + (i + 1);
+            int lx = btn.x + (btn.width - fontMetric.stringWidth(label)) / 2;
+            int ly = btn.y + (btn.height + fontMetric.getAscent()) / 2;
+            g.drawString(label, lx, ly);
+        }
 
         // Drawing an instructions box 
         int boxWidth = 350;  
@@ -432,7 +448,7 @@ public class Game extends GameCore {
                     playerObj.respawn(100, 475);
                     canJump = false;
                     wasOnGround = false;
-                    state.gameOverSoundPlayed = false;
+                    state.resetForNewLevel();   // restore lives to 3 for the new level
                     levelMgr.loadNextLevel(collectibles, enemyMgr, powerups, hawks);
                     state.levelCompleted = false;
                 }
@@ -491,9 +507,12 @@ public class Game extends GameCore {
      */
     private void handleMouseClick(java.awt.event.MouseEvent evt) {
         if (state.inMenu) {
-            if (startButton.contains(evt.getPoint())) {
-                state.inMenu = false;
-                initialiseGame();
+            for (int i = 0; i < 3; i++) {
+                if (levelButtons[i].contains(evt.getPoint())) {
+                    state.inMenu = false;
+                    initialiseGame(i + 1);
+                    return;
+                }
             }
         } else if (state.gameOver) {
             if (state.gameCompleted) {
@@ -507,7 +526,7 @@ public class Game extends GameCore {
                     state.gameOver = false;
                     state.levelCompleted = false;
                     playerObj.respawn(100, 475);
-                    state.lives = 2;
+                    state.resetForNewLevel();   // 3 fresh lives
                     levelMgr.reloadCurrent(collectibles, enemyMgr, powerups, hawks);
                 }
             }
