@@ -69,8 +69,8 @@ This started as a Year-3 university coursework project. Modernising it taught me
 - [x] Maven build + classpath resources
 - [x] README v1 + screenshots
 - [x] GitHub Actions CI
-- [ ] Refactor `Game.java` into `Player`, `EnemyManager`, `CollisionService`, etc.
-- [ ] JUnit 5 tests for collision & sound filters
+- [x] Refactor `Game.java` into `Player`, `EnemyManager`, `CollisionService`, etc.
+- [x] JUnit 5 tests for collision & sound filters
 - [ ] Double-jump powerup
 - [ ] Chasing hawk enemy
 - [ ] Third level
