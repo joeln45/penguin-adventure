@@ -2,9 +2,10 @@ package com.joeln45.penguin;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.joeln45.penguin.engine.*;
 
@@ -70,7 +71,7 @@ public class Game extends GameCore {
 
     Sprite player = null;
     Sprite igloo = null;
-    ArrayList<Tile> collidedTiles = new ArrayList<Tile>();
+    List<Tile> collidedTiles = Collections.emptyList();
 
     ArrayList<Sprite> stars = new ArrayList<Sprite>();
     Animation starAnim;
@@ -100,23 +101,9 @@ public class Game extends GameCore {
      *
      * @param args Command-line arguments (not used in this program)
      */
-    /**
-     * Opens a bundled resource (under src/main/resources) as a stream so the
-     * game runs identically from an IDE or a packaged JAR. Falls back to
-     * the filesystem only if the classpath lookup fails.
-     */
-    private static java.io.InputStream openResource(String name) throws java.io.FileNotFoundException {
-        java.io.InputStream in = Game.class.getClassLoader().getResourceAsStream(name);
-        if (in != null) {
-            return in;
-        }
-        return new java.io.FileInputStream(name);
-    }
-
     public static void main(String[] args) {
 
-        Sound backgroundMusic = new Sound("sounds/background_music.mid");
-        backgroundMusic.setVolume(0.5f); // Sets volume to 50%
+        Sound backgroundMusic = AssetLoader.backgroundMusic();
         backgroundMusic.start(); // This will start playing the bg music
 
         Game gct = new Game();
@@ -638,17 +625,21 @@ public class Game extends GameCore {
     public void update(long elapsed) {
         if (gameOver) {
             if (!gameOverSoundPlayed) {
-                Sound gameOverSound = new Sound("sounds/game_over.wav");
-                    gameOverSound.start();
+                AssetLoader.gameOverSound().start();
                 gameOverSoundPlayed = true;
             }
             return;
         }
 
         wasOnGround = false;
-        
         horizontalCollision = false;
-        checkTileCollision(player, tmap);
+
+        CollisionService.TileCollisionResult tileResult =
+                CollisionService.checkTileCollision(player, tmap);
+        collidedTiles = tileResult.collidedTiles;
+        if (tileResult.horizontalCollision) horizontalCollision = true;
+        if (tileResult.landedOnGround) { canJump = true; wasOnGround = true; }
+        if (tileResult.onGround) canJump = true;
 
         // Update flickering state
         if (isFlickering) {
@@ -694,10 +685,9 @@ public class Game extends GameCore {
         if (jump && canJump) {
             // Play the jump sound here with EchoFilter
             try {
-                Sound jumpSound = new Sound("sounds/jump.wav", new EchoFilter(openResource("sounds/jump.wav"), 100, 0.5f, 44100)); // 100ms delay, 0.5 decay
-                jumpSound.start();
+                AssetLoader.jumpSound().start();
             } catch (FileNotFoundException e) {
-                e.printStackTrace(); 
+                e.printStackTrace();
             }
 
             player.setAnimationSpeed(1.8f);
@@ -773,13 +763,12 @@ public class Game extends GameCore {
             star.update(elapsed);
             
             // Check for collision with player
-            if (boundingBoxCollision(player, star)) {
+            if (CollisionService.boundingBoxCollision(player, star)) {
                 // Remove the star and increase counter
                 stars.remove(i);
                 starsCollected++;
 
-                Sound coinSound = new Sound("sounds/coin.wav");
-                coinSound.start();
+                AssetLoader.coinSound().start();
             }
         }
 
@@ -793,7 +782,7 @@ public class Game extends GameCore {
             enemy.update(elapsed);
             
             // Check for collision with tiles
-            boolean collision = checkEnemyTileCollision(enemy, tmap);
+            boolean collision = CollisionService.checkEnemyTileCollision(enemy, tmap);
             if (collision) {
                 // Reverse the direction
                 enemy.setSpeedX(-enemy.getSpeedX());
@@ -808,20 +797,18 @@ public class Game extends GameCore {
             }
             
             // Check for collision with player
-            if (boundingBoxCollision(player, enemy)) {
+            if (CollisionService.boundingBoxCollision(player, enemy)) {
                 lives--;
                 // Plays attack sound when player gets damaged
                 try {
-                    Sound attackSound = new Sound("sounds/attack.wav", new VolumeBoostFilter(openResource("sounds/attack.wav"), 0.25f)); // 50% volume boost
-                    attackSound.start();
+                    AssetLoader.attackSound().start();
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace(); 
+                    e.printStackTrace();
                 }
                 if (lives <= 0) {
                     // Game over
                     gameOver = true;
-                    Sound gameOverSound = new Sound("sounds/game_over.wav");
-                    gameOverSound.start();
+                    AssetLoader.gameOverSound().start();
                     gameOverSoundPlayed = true;
                     
                 } else {
@@ -838,23 +825,21 @@ public class Game extends GameCore {
         handleScreenEdge(player, tmap, elapsed);
         
         // Checks for collision with igloo
-        if (!levelCompleted && boundingBoxCollision(player, igloo)) {
+        if (!levelCompleted && CollisionService.boundingBoxCollision(player, igloo)) {
             if (starsCollected >= 3) {
                 if (currentLevel == 2) {
                     gameOver = true;
                     gameCompleted = true;
-                    // Play level complete sound 
+                    // Play level complete sound
                     try {
-                        Sound levelCompleteSound = new Sound("sounds/level_complete.wav", new FadeInFilter(openResource("sounds/level_complete.wav"), 2000, 44100)); // 1 second fade-in
-                        levelCompleteSound.start();
+                        AssetLoader.levelCompleteSound().start();
                     } catch (FileNotFoundException e) {
-                        e.printStackTrace(); 
+                        e.printStackTrace();
                     }
                 } else {
-                    // Play level complete sound 
+                    // Play level complete sound
                     try {
-                        Sound levelCompleteSound = new Sound("sounds/level_complete.wav", new FadeInFilter(openResource("sounds/level_complete.wav"), 2000, 44100)); // 1 second fade-in
-                        levelCompleteSound.start();
+                        AssetLoader.levelCompleteSound().start();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
@@ -865,43 +850,6 @@ public class Game extends GameCore {
         }
     }
 
-    /**
-     * Check if an enemy has collided with a tile
-     */
-    public boolean checkEnemyTileCollision(Sprite enemy, TileMap tmap) {
-        float ex = enemy.getX(); //  x-coordinate of the enemy's position
-        float ey = enemy.getY(); // y-coordinate of the enemy's position
-        float ew = enemy.getWidth(); // width of the enemy sprite
-        float eh = enemy.getHeight(); // height of the enemy sprite
-        float evx = enemy.getSpeedX(); //horizontal velocity of the enemy
-        
-        // Find out tile dimensions
-        float tileWidth = tmap.getTileWidth();
-        float tileHeight = tmap.getTileHeight();
-        
-        // Calculate the new position
-        float nextX = ex + evx;
-        
-        // Determine which tile the enemy is moving into horizontally
-        int tileX = evx > 0 ? 
-            (int)((nextX + ew - 2) / tileWidth) : 
-            (int)(nextX / tileWidth);
-        
-        // Check the corners on that side
-        int topTileY = (int)(ey / tileHeight);
-        int bottomTileY = (int)((ey + eh - 3) / tileHeight);
-        
-        // Check each potential collision along the side
-        for (int tileY = topTileY; tileY <= bottomTileY; tileY++) {
-            Tile tile = tmap.getTile(tileX, tileY);
-            if (tile != null && tile.getCharacter() != '.') {
-                return true; // Collision detected
-            }
-        }
-        
-        return false; // No collision
-    }
-    
     /**
      * Load level 2
      */
@@ -1029,174 +977,6 @@ public class Game extends GameCore {
                 break;
             default:
                 break;
-        }
-    }
-
-    /** 
-     * Detects a bounding box collision between sprites s1 and s2.
-     * Uses a slightly smaller hitbox for better feel.
-     * 
-     * @param s1 First sprite
-     * @param s2 Second sprite
-     * @return true if a collision has occurred, false if it has not
-     */
-    public boolean boundingBoxCollision(Sprite s1, Sprite s2) {
-        float s1x = s1.getX(); // x-coordinate of the sprite's position
-        float s1y = s1.getY(); //y-coordinate of the sprite's position
-        float s1w = s1.getWidth(); //width of the sprite
-        float s1h = s1.getHeight(); // height of the sprite
-        
-        float s2x = s2.getX();
-        float s2y = s2.getY();
-        float s2w = s2.getWidth();
-        float s2h = s2.getHeight();
-        
-        float hitboxMargin = 5.0f;
-        
-        // Check if the bounding boxes overlap with adjusted margins
-        return (s1x + hitboxMargin < s2x + s2w - hitboxMargin && 
-                s1x + s1w - hitboxMargin > s2x + hitboxMargin &&
-                s1y + hitboxMargin < s2y + s2h - hitboxMargin && 
-                s1y + s1h - hitboxMargin > s2y + hitboxMargin);
-    }
-    
-   /**
-     * Checks for collisions between the player and tiles in the tile map.
-     *
-     * @param s			The Sprite to check collisions for
-     * @param tmap		The tile map to check 
-     */
-    public void checkTileCollision(Sprite s, TileMap tmap) {
-        // Clears out the current set of collided tiles
-        collidedTiles.clear();
-    
-        // Get sprite dimensions and position
-        float sx = s.getX();
-        float sy = s.getY();
-        float sw = s.getWidth();
-        float sh = s.getHeight();
-        float velocityX = s.getSpeedX();
-        float velocityY = s.getVelocityY();
-        
-        // Find out tile dimensions
-        float tileWidth = tmap.getTileWidth();
-        float tileHeight = tmap.getTileHeight();
-        
-        // Avoids doing unnecessary collision checks if velocity is zero
-        if (velocityX == 0 && velocityY == 0) {
-            checkIfOnGround(s, tmap);
-            return;
-        }
-        
-        // Calculate the potential new position
-        float nextX = sx + velocityX;
-        float nextY = sy + velocityY;
-        
-        // Check horizontal movement 
-        if (velocityX != 0) {
-            // Determine which tile the sprite is moving into horizontally
-            int tileX = velocityX > 0 ? 
-                (int)((nextX + sw - 2) / tileWidth) : // Slight offset to prevent sticking
-                (int)(nextX / tileWidth);
-            
-            // Checks the corners on that side
-            int topTileY = (int)(sy / tileHeight);
-            int bottomTileY = (int)((sy + sh - 3) / tileHeight); // Slight offset for smoother landing
-            
-            boolean localHorizontalCollision = false;
-            
-            // Check each potential collision along the side
-            for (int tileY = topTileY; tileY <= bottomTileY; tileY++) {
-                Tile tile = tmap.getTile(tileX, tileY);
-                if (tile != null && tile.getCharacter() != '.') {
-                    collidedTiles.add(tile);
-                    localHorizontalCollision = true;
-                }
-            }
-            
-            // Handle horizontal collision
-            if (localHorizontalCollision) {
-                if (velocityX > 0) {
-                    // Moving right
-                    s.setX(tileX * tileWidth - sw);
-                } else {
-                    // Moving left
-                    s.setX((tileX + 1) * tileWidth);
-                }
-                s.setSpeedX(0);
-                horizontalCollision = true;
-            }
-        }
-        
-        sx = s.getX();
-        velocityY = s.getVelocityY(); 
-        nextY = sy + velocityY;
-        
-        if (velocityY != 0) {
-            // Determine which tile the sprite is moving into vertically
-            int tileY = velocityY > 0 ? 
-                (int)((nextY + sh - 1) / tileHeight) : // Slight offset for smoother landing
-                (int)(nextY / tileHeight);
-            
-            // Check the corners on that side
-            int leftTileX = (int)((sx + 2) / tileWidth); 
-            int rightTileX = (int)((sx + sw - 2) / tileWidth); 
-            
-            boolean verticalCollision = false;
-            
-            // Check each potential collision along the top or the bottom edge of the tiles
-            for (int tileX = leftTileX; tileX <= rightTileX; tileX++) {
-                Tile tile = tmap.getTile(tileX, tileY);
-                if (tile != null && tile.getCharacter() != '.') {
-                    collidedTiles.add(tile);
-                    verticalCollision = true;
-                }
-            }
-            
-            // Handle vertical collision
-            if (verticalCollision) {
-                if (velocityY > 0) {
-                    // Moving down, hit ground
-                    s.setY(tileY * tileHeight - sh);
-                    s.setVelocityY(0);
-                    canJump = true;
-                    wasOnGround = true;
-                } else {
-                    // Moving up, hit the top
-                    s.setY((tileY + 1) * tileHeight);
-                    s.setVelocityY(0);
-                }
-            }
-        } else {
-            // If we're not moving vertically, it check if we're on ground
-            checkIfOnGround(s, tmap);
-        }
-    }
-    
-    /**
-     * Check if the sprite is standing on ground (for jump handling)
-     */
-    private void checkIfOnGround(Sprite s, TileMap tmap) {
-        float sx = s.getX();
-        float sy = s.getY();
-        float sw = s.getWidth();
-        float sh = s.getHeight();
-        float tileWidth = tmap.getTileWidth();
-        float tileHeight = tmap.getTileHeight();
-        
-        int groundTileY = (int)((sy + sh + 1) / tileHeight);
-        
-        int leftTileX = (int)((sx + 2) / tileWidth);
-        int rightTileX = (int)((sx + sw - 2) / tileWidth);
-        
-        // Checks for tiles along the bottom edge
-        for (int tileX = leftTileX; tileX <= rightTileX; tileX++) {
-            Tile tile = tmap.getTile(tileX, groundTileY);
-            if (tile != null && tile.getCharacter() != '.') {
-                // if there's ground just below
-                canJump = true;
-                return;
-            }
         }
     }
 
