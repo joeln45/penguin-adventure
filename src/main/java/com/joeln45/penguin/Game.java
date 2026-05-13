@@ -56,6 +56,7 @@ public class Game extends GameCore {
 
     CollectibleManager collectibles = new CollectibleManager();
     EnemyManager enemyMgr = new EnemyManager();
+    PowerupManager powerups = new PowerupManager();
     LevelManager levelMgr;
     // Aliases (set after levelMgr is constructed) so existing call sites keep compiling
     TileMap tmap;
@@ -165,7 +166,7 @@ public class Game extends GameCore {
         canJump = false;
         wasOnGround = false;
         state.resetForNewGame();
-        levelMgr.loadFirstLevel(collectibles, enemyMgr);
+        levelMgr.loadFirstLevel(collectibles, enemyMgr, powerups);
     }
 
     /**
@@ -208,8 +209,10 @@ public class Game extends GameCore {
         // Draw stars and enemies via their managers
         collectibles.draw(g, xo, yo, input.isDebug());
         enemyMgr.draw(g, xo, yo, input.isDebug());
+        powerups.draw(g, xo, yo);
 
         HudRenderer.drawStarCounter(g, collectibles.getStarsCollected(), collectibles.total());
+        HudRenderer.drawDoubleJumpIndicator(g, powerups.remainingMs());
         HudRenderer.drawLives(g, heartPic, state.lives, getWidth());
         HudRenderer.drawSoundIcon(g, soundIcon, state.isMuted, getWidth());
 
@@ -374,7 +377,7 @@ public class Game extends GameCore {
         background.update(elapsed, input.isMoveRight(), input.isMoveLeft(), horizontalCollision);
 
         // Delegate physics + movement + jump to Player
-        boolean jumped = playerObj.update(elapsed, input, canJump);
+        boolean jumped = playerObj.update(elapsed, input, canJump, powerups.isDoubleJumpActive());
         if (jumped) {
             canJump = false;
             try {
@@ -386,6 +389,7 @@ public class Game extends GameCore {
 
         // Update collectibles (animation + pickup)
         collectibles.update(elapsed, player);
+        powerups.update(elapsed, player);
 
         // Update enemies (movement + player hit detection)
         if (enemyMgr.update(elapsed, player, tmap)) {
@@ -425,7 +429,7 @@ public class Game extends GameCore {
                     canJump = false;
                     wasOnGround = false;
                     state.gameOverSoundPlayed = false;
-                    levelMgr.loadNextLevel(collectibles, enemyMgr);
+                    levelMgr.loadNextLevel(collectibles, enemyMgr, powerups);
                     state.levelCompleted = false;
                 }
             }
@@ -500,7 +504,7 @@ public class Game extends GameCore {
                     state.levelCompleted = false;
                     playerObj.respawn(100, 475);
                     state.lives = 2;
-                    levelMgr.reloadCurrent(collectibles, enemyMgr);
+                    levelMgr.reloadCurrent(collectibles, enemyMgr, powerups);
                 }
             }
         }

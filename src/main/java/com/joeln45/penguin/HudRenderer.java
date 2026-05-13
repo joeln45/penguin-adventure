@@ -73,6 +73,26 @@ public final class HudRenderer {
         return new Rectangle(containerWidth - 50, SOUND_ICON_Y, SOUND_ICON_SIZE, SOUND_ICON_SIZE);
     }
 
+    /** Pill showing "2x JUMP — Ns" while the double-jump powerup is active. */
+    public static void drawDoubleJumpIndicator(Graphics2D g, long remainingMs) {
+        if (remainingMs <= 0) return;
+        int x = STAR_PANEL_X;
+        int y = STAR_PANEL_Y + STAR_PANEL_H + 10;
+        int w = 160;
+        int h = 36;
+
+        g.setColor(new Color(0, 0, 0, 140));
+        g.fillRoundRect(x, y, w, h, 10, 10);
+        g.setColor(new Color(255, 195, 0, 200));
+        g.setStroke(new BasicStroke(2));
+        g.drawRoundRect(x, y, w, h, 10, 10);
+
+        g.setColor(new Color(255, 220, 80));
+        g.setFont(new Font("Arial", Font.BOLD, 18));
+        long seconds = (remainingMs + 999) / 1000; // round up so "1s" shows for the final tick
+        g.drawString(String.format("2x JUMP - %ds", seconds), x + 12, y + 24);
+    }
+
     /** Full-screen game-over / level-complete overlay with a styled action button. */
     public static void drawGameOverScreen(Graphics2D g, Font gameOverFont, boolean gameCompleted,
                                           Rectangle playAgainBtn, Rectangle restartBtn,

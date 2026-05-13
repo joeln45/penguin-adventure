@@ -23,6 +23,8 @@ public final class Player {
     private static final float JUMP_BOOST_FACTOR = 1.1f;
 
     private final Sprite sprite;
+    private boolean usedAirJump = false; // air-jump consumed this airborne span
+    private boolean lastCanJump = false; // ground-state from previous frame
 
     public Player(Animation idleAnim) {
         this.sprite = new Sprite(idleAnim);
@@ -34,34 +36,41 @@ public final class Player {
         sprite.setPosition(x, y);
         sprite.setVelocity(0, 0);
         sprite.show();
+        usedAirJump = false;
+        lastCanJump = false;
     }
 
     /**
      * Applies gravity, jump, and horizontal movement for this frame. Caller
-     * passes in the latest input snapshot and whether a jump is permitted
-     * (the player just touched ground).
+     * passes in the latest input snapshot, whether a jump is permitted
+     * (the player just touched ground), and whether the double-jump powerup
+     * is currently active.
      *
      * @return true if a jump was initiated (caller should play the sfx)
      */
-    public boolean update(long elapsed, InputHandler input, boolean canJump) {
+    public boolean update(long elapsed, InputHandler input, boolean canJump,
+                          boolean doubleJumpAvailable) {
+        // Reset the air-jump credit whenever we transition onto solid ground.
+        if (canJump && !lastCanJump) {
+            usedAirJump = false;
+        }
+        lastCanJump = canJump;
+
         // Gravity with terminal velocity
         float newVy = sprite.getVelocityY() + (GRAVITY * elapsed);
         if (newVy > TERMINAL_VELOCITY) newVy = TERMINAL_VELOCITY;
         sprite.setVelocityY(newVy);
 
-        // Jump
+        // Jump (ground jump or, with powerup active, a single air jump)
         boolean jumped = false;
-        if (input.isJump() && canJump) {
-            sprite.setAnimationSpeed(1.8f);
-            sprite.setVelocityY(JUMP_SPEED);
-            input.consumeJump();
-            jumped = true;
-
-            // Small horizontal boost when jumping while moving
-            if (input.isMoveRight()) {
-                sprite.setSpeedX(MOVE_SPEED * JUMP_BOOST_FACTOR);
-            } else if (input.isMoveLeft()) {
-                sprite.setSpeedX(-MOVE_SPEED * JUMP_BOOST_FACTOR);
+        if (input.isJump()) {
+            if (canJump) {
+                doJump(input);
+                jumped = true;
+            } else if (doubleJumpAvailable && !usedAirJump) {
+                doJump(input);
+                usedAirJump = true;
+                jumped = true;
             }
         }
 
@@ -96,5 +105,17 @@ public final class Player {
         // Advance sprite animation + apply velocity
         sprite.update(elapsed);
         return jumped;
+    }
+
+    private void doJump(InputHandler input) {
+        sprite.setAnimationSpeed(1.8f);
+        sprite.setVelocityY(JUMP_SPEED);
+        input.consumeJump();
+        // Small horizontal boost when jumping while moving
+        if (input.isMoveRight()) {
+            sprite.setSpeedX(MOVE_SPEED * JUMP_BOOST_FACTOR);
+        } else if (input.isMoveLeft()) {
+            sprite.setSpeedX(-MOVE_SPEED * JUMP_BOOST_FACTOR);
+        }
     }
 }

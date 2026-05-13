@@ -71,7 +71,7 @@ This started as a Year-3 university coursework project. Modernising it taught me
 - [x] GitHub Actions CI
 - [x] Refactor `Game.java` into `Player`, `EnemyManager`, `CollisionService`, etc.
 - [x] JUnit 5 tests for collision & sound filters
-- [ ] Double-jump powerup
+- [x] Double-jump powerup
 - [ ] Chasing hawk enemy
 - [ ] Third level
 - [ ] Mute MIDI on toggle (currently only WAV silences)

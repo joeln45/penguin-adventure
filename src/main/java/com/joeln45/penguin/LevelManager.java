@@ -44,30 +44,38 @@ public final class LevelManager {
     public boolean isLastLevel()  { return currentLevel >= LAST_LEVEL; }
 
     /** Load the very first level (called on a new game). */
-    public void loadFirstLevel(CollectibleManager collectibles, EnemyManager enemies) {
+    public void loadFirstLevel(CollectibleManager collectibles, EnemyManager enemies,
+                               PowerupManager powerups) {
         currentLevel = FIRST_LEVEL;
         tmap.loadMap("maps", "map1.txt");
         setBoundaries(20, 2035, 65, 480);
         positionIgloo();
         collectibles.loadLevel(currentLevel);
         enemies.loadLevel(currentLevel);
+        powerups.loadLevel(currentLevel);
+        powerups.deactivate();
     }
 
     /** Advance to the next level (currently a fixed level-2 transition). */
-    public void loadNextLevel(CollectibleManager collectibles, EnemyManager enemies) {
+    public void loadNextLevel(CollectibleManager collectibles, EnemyManager enemies,
+                              PowerupManager powerups) {
         currentLevel++;
         tmap.loadMap("maps", "map" + currentLevel + ".txt");
         setBoundaries(20, 2035, 65, 480);
         positionIgloo();
         collectibles.loadLevel(currentLevel);
         enemies.loadLevel(currentLevel);
+        powerups.loadLevel(currentLevel);
     }
 
     /** Reload the current level's collectibles/enemies/igloo without bumping the counter. */
-    public void reloadCurrent(CollectibleManager collectibles, EnemyManager enemies) {
+    public void reloadCurrent(CollectibleManager collectibles, EnemyManager enemies,
+                              PowerupManager powerups) {
         positionIgloo();
         collectibles.loadLevel(currentLevel);
         enemies.loadLevel(currentLevel);
+        powerups.loadLevel(currentLevel);
+        powerups.deactivate();
     }
 
     private void positionIgloo() {
