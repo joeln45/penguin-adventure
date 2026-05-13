@@ -17,7 +17,7 @@ import com.joeln45.penguin.engine.TileMap;
 public final class LevelManager {
 
     public static final int FIRST_LEVEL = 1;
-    public static final int LAST_LEVEL = 2;
+    public static final int LAST_LEVEL = 3;
 
     private final TileMap tmap = new TileMap();
     private final Sprite igloo;
@@ -43,42 +43,36 @@ public final class LevelManager {
     public float bottomBoundary() { return bottomBoundary; }
     public boolean isLastLevel()  { return currentLevel >= LAST_LEVEL; }
 
+    /** Load a specific level number, resetting all per-level state. */
+    public void loadLevel(int level, CollectibleManager collectibles, EnemyManager enemies,
+                          PowerupManager powerups, HawkManager hawks) {
+        currentLevel = level;
+        tmap.loadMap("maps", "map" + level + ".txt");
+        setBoundaries(20, 2035, 65, 480);
+        positionIgloo();
+        collectibles.loadLevel(level);
+        enemies.loadLevel(level);
+        powerups.loadLevel(level);
+        powerups.deactivate();
+        hawks.loadLevel(level);
+    }
+
     /** Load the very first level (called on a new game). */
     public void loadFirstLevel(CollectibleManager collectibles, EnemyManager enemies,
                                PowerupManager powerups, HawkManager hawks) {
-        currentLevel = FIRST_LEVEL;
-        tmap.loadMap("maps", "map1.txt");
-        setBoundaries(20, 2035, 65, 480);
-        positionIgloo();
-        collectibles.loadLevel(currentLevel);
-        enemies.loadLevel(currentLevel);
-        powerups.loadLevel(currentLevel);
-        powerups.deactivate();
-        hawks.loadLevel(currentLevel);
+        loadLevel(FIRST_LEVEL, collectibles, enemies, powerups, hawks);
     }
 
-    /** Advance to the next level (currently a fixed level-2 transition). */
+    /** Advance to the next level. */
     public void loadNextLevel(CollectibleManager collectibles, EnemyManager enemies,
                               PowerupManager powerups, HawkManager hawks) {
-        currentLevel++;
-        tmap.loadMap("maps", "map" + currentLevel + ".txt");
-        setBoundaries(20, 2035, 65, 480);
-        positionIgloo();
-        collectibles.loadLevel(currentLevel);
-        enemies.loadLevel(currentLevel);
-        powerups.loadLevel(currentLevel);
-        hawks.loadLevel(currentLevel);
+        loadLevel(currentLevel + 1, collectibles, enemies, powerups, hawks);
     }
 
-    /** Reload the current level's collectibles/enemies/igloo without bumping the counter. */
+    /** Reload the current level (used by the Play-Again button). */
     public void reloadCurrent(CollectibleManager collectibles, EnemyManager enemies,
                               PowerupManager powerups, HawkManager hawks) {
-        positionIgloo();
-        collectibles.loadLevel(currentLevel);
-        enemies.loadLevel(currentLevel);
-        powerups.loadLevel(currentLevel);
-        powerups.deactivate();
-        hawks.loadLevel(currentLevel);
+        loadLevel(currentLevel, collectibles, enemies, powerups, hawks);
     }
 
     private void positionIgloo() {
@@ -86,6 +80,8 @@ public final class LevelManager {
             igloo.setPosition(1920, 160);
         } else if (currentLevel == 2) {
             igloo.setPosition(1910, 319);
+        } else if (currentLevel == 3) {
+            igloo.setPosition(1920, 160);  // top of the right-side stair, like level 1
         }
         igloo.show();
     }

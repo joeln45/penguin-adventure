@@ -38,6 +38,8 @@ public final class HawkManager {
             spawnAt(1300, 130);
         } else if (level == 2) {
             spawnAt(1400, 100);
+        } else if (level == 3) {
+            spawnAt(1500, 100);
         }
     }
 

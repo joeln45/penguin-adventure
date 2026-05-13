@@ -73,7 +73,7 @@ This started as a Year-3 university coursework project. Modernising it taught me
 - [x] JUnit 5 tests for collision & sound filters
 - [x] Double-jump powerup
 - [x] Chasing hawk enemy
-- [ ] Third level
+- [x] Third level
 - [ ] Mute MIDI on toggle (currently only WAV silences)
 - [ ] Tagged v1.0.0 release with downloadable JAR
 

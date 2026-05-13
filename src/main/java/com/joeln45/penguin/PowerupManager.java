@@ -43,6 +43,8 @@ public final class PowerupManager {
             spawnAt(450, 400);
         } else if (level == 2) {
             spawnAt(1200, 400);
+        } else if (level == 3) {
+            spawnAt(650, 415);
         }
     }
 
