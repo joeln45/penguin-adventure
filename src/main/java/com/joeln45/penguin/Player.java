@@ -51,14 +51,13 @@ public final class Player {
 
     /**
      * Applies gravity, jump, and horizontal movement for this frame. Caller
-     * passes in the latest input snapshot, whether a jump is permitted
-     * (the player just touched ground), and whether the double-jump powerup
-     * is currently active.
+     * passes in the latest input snapshot and whether a jump is permitted
+     * (the player just touched ground). A free mid-air jump is always
+     * available once per airborne span.
      *
      * @return true if a jump was initiated (caller should play the sfx)
      */
-    public boolean update(long elapsed, InputHandler input, boolean canJump,
-                          boolean doubleJumpAvailable) {
+    public boolean update(long elapsed, InputHandler input, boolean canJump) {
         long now = System.currentTimeMillis();
 
         // Reset the air-jump credit whenever we transition onto solid ground,
@@ -85,7 +84,7 @@ public final class Player {
         // Jump trigger combines three game-feel tricks:
         //   - coyote time: 100 ms grace after walking off a ledge
         //   - jump buffer: 150 ms remembered press window before landing
-        //   - air jump (with double-jump powerup): one extra mid-air jump
+        //   - free air jump: one extra mid-air jump per airborne span
         boolean jumped = false;
         boolean withinBuffer = (now - input.jumpPressedAt()) <= JUMP_BUFFER_MS;
         boolean withinCoyote = (now - lastGroundedAt) <= COYOTE_TIME_MS;
@@ -95,7 +94,7 @@ public final class Player {
                 doJump(input);
                 lastGroundedAt = 0; // burn coyote so we can't re-use it mid-air
                 jumped = true;
-            } else if (doubleJumpAvailable && !usedAirJump) {
+            } else if (!usedAirJump) {
                 doJump(input);
                 usedAirJump = true;
                 jumped = true;

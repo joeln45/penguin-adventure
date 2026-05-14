@@ -74,24 +74,23 @@ public final class HudRenderer {
         return new Rectangle(containerWidth - 50, SOUND_ICON_Y, SOUND_ICON_SIZE, SOUND_ICON_SIZE);
     }
 
-    /** Pill showing "2x JUMP — Ns" while the double-jump powerup is active. */
-    public static void drawDoubleJumpIndicator(Graphics2D g, long remainingMs) {
-        if (remainingMs <= 0) return;
+    /** Pill showing "SHIELD x N" while the player has shield charges available. */
+    public static void drawShieldIndicator(Graphics2D g, int shields) {
+        if (shields <= 0) return;
         int x = STAR_PANEL_X;
-        int y = STAR_PANEL_Y + STAR_PANEL_H + 10;
+        int y = STAR_PANEL_Y + STAR_PANEL_H + 10; // directly under the stars pill
         int w = 160;
         int h = 36;
 
         g.setColor(new Color(0, 0, 0, 140));
         g.fillRoundRect(x, y, w, h, 10, 10);
-        g.setColor(new Color(255, 195, 0, 200));
+        g.setColor(new Color(80, 160, 255, 220));
         g.setStroke(new BasicStroke(2));
         g.drawRoundRect(x, y, w, h, 10, 10);
 
-        g.setColor(new Color(255, 220, 80));
+        g.setColor(new Color(180, 220, 255));
         g.setFont(new Font("Arial", Font.BOLD, 18));
-        long seconds = (remainingMs + 999) / 1000; // round up so "1s" shows for the final tick
-        g.drawString(String.format("2x JUMP - %ds", seconds), x + 12, y + 24);
+        g.drawString(String.format("SHIELD x %d", shields), x + 12, y + 24);
     }
 
     /** Dimmed overlay with a "PAUSED" caption — shown while the window has lost focus. */

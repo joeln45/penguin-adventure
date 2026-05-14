@@ -36,7 +36,6 @@ public class Game extends GameCore {
     // Per-frame physics flags (transient — not part of GameState)
     boolean horizontalCollision = false;
     boolean canJump = false;
-    boolean wasOnGround = false;
     boolean paused = false;          // true while the window has lost focus
     static final long FLICKER_DURATION_MS = 2000;
 
@@ -57,8 +56,8 @@ public class Game extends GameCore {
 
     CollectibleManager collectibles = new CollectibleManager();
     EnemyManager enemyMgr = new EnemyManager();
-    PowerupManager powerups = new PowerupManager();
     HawkManager hawks = new HawkManager();
+    ShieldManager shields = new ShieldManager();
     ParticleManager particles = new ParticleManager();
     LevelManager levelMgr;
     // Aliases (set after levelMgr is constructed) so existing call sites keep compiling
@@ -182,9 +181,9 @@ public class Game extends GameCore {
     public void initialiseGame(int level) {
         playerObj.respawn(100, 475);
         canJump = false;
-        wasOnGround = false;
         state.resetForNewGame();
-        levelMgr.loadLevel(level, collectibles, enemyMgr, powerups, hawks);
+        levelMgr.loadLevel(level, collectibles, enemyMgr, hawks);
+        shields.loadLevel(level);
         particles.reset();
     }
 
@@ -229,11 +228,11 @@ public class Game extends GameCore {
         collectibles.draw(g, xo, yo, input.isDebug());
         enemyMgr.draw(g, xo, yo, input.isDebug());
         hawks.draw(g, xo, yo, input.isDebug());
-        powerups.draw(g, xo, yo);
+        shields.draw(g, xo, yo);
         particles.draw(g, xo, yo);
 
         HudRenderer.drawStarCounter(g, collectibles.getStarsCollected(), collectibles.total());
-        HudRenderer.drawDoubleJumpIndicator(g, powerups.remainingMs());
+        HudRenderer.drawShieldIndicator(g, state.shields);
         HudRenderer.drawLives(g, heartPic, state.lives, getWidth());
         HudRenderer.drawSoundIcon(g, soundIcon, state.isMuted, getWidth());
 
@@ -385,7 +384,6 @@ public class Game extends GameCore {
             return;
         }
 
-        wasOnGround = false;
         horizontalCollision = false;
 
         CollisionService.TileCollisionResult tileResult =
@@ -393,7 +391,6 @@ public class Game extends GameCore {
         collidedTiles = tileResult.collidedTiles;
         if (tileResult.horizontalCollision) horizontalCollision = true;
         if (tileResult.landedOnGround) {
-            wasOnGround = true;
             // Puff of dust at the player's feet on touchdown.
             particles.spawnLandingDust(player.getX() + player.getWidth() / 2f,
                                        player.getY() + player.getHeight());
@@ -415,7 +412,7 @@ public class Game extends GameCore {
         background.update(elapsed, input.isMoveRight(), input.isMoveLeft(), horizontalCollision);
 
         // Delegate physics + movement + jump to Player
-        boolean jumped = playerObj.update(elapsed, input, canJump, powerups.isDoubleJumpActive());
+        boolean jumped = playerObj.update(elapsed, input, canJump);
         if (jumped) {
             canJump = false;
             try {
@@ -427,26 +424,33 @@ public class Game extends GameCore {
 
         // Update collectibles (animation + pickup)
         collectibles.update(elapsed, player);
-        powerups.update(elapsed, player);
+        shields.update(elapsed, player, state);
         particles.update(elapsed);
 
         // Update enemies (movement + player hit detection)
         boolean enemyHit = enemyMgr.update(elapsed, player, tmap);
         boolean hawkHit = hawks.update(elapsed, player);
         if (enemyHit || hawkHit) {
-            state.lives--;
-            try {
-                AssetLoader.attackSound().start();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            if (state.lives <= 0) {
-                state.gameOver = true;
-                AssetLoader.gameOverSound().start();
-                state.gameOverSoundPlayed = true;
-            } else {
+            if (state.shields > 0) {
+                // Shield absorbs the hit — no life lost, brief flicker only.
+                state.shields--;
                 state.isFlickering = true;
                 state.flickerStartTime = System.currentTimeMillis();
+            } else {
+                state.lives--;
+                try {
+                    AssetLoader.attackSound().start();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                if (state.lives <= 0) {
+                    state.gameOver = true;
+                    AssetLoader.gameOverSound().start();
+                    state.gameOverSoundPlayed = true;
+                } else {
+                    state.isFlickering = true;
+                    state.flickerStartTime = System.currentTimeMillis();
+                }
             }
         }
 
@@ -468,9 +472,10 @@ public class Game extends GameCore {
                     state.levelCompleted = true;
                     playerObj.respawn(100, 475);
                     canJump = false;
-                    wasOnGround = false;
                     state.resetForNewLevel();   // restore lives to 3 for the new level
-                    levelMgr.loadNextLevel(collectibles, enemyMgr, powerups, hawks);
+                    levelMgr.loadNextLevel(collectibles, enemyMgr, hawks);
+                    shields.loadLevel(levelMgr.currentLevel());
+                    particles.reset();
                     state.levelCompleted = false;
                 }
             }
@@ -490,7 +495,6 @@ public class Game extends GameCore {
             s.setY(levelMgr.bottomBoundary() - sh);
             s.setVelocityY(0);
             canJump = true;
-            wasOnGround = true;
         }
         if (sy < levelMgr.topBoundary()) {
             s.setY(levelMgr.topBoundary());
@@ -548,7 +552,7 @@ public class Game extends GameCore {
                     state.levelCompleted = false;
                     playerObj.respawn(100, 475);
                     state.resetForNewLevel();   // 3 fresh lives
-                    levelMgr.reloadCurrent(collectibles, enemyMgr, powerups, hawks);
+                    levelMgr.reloadCurrent(collectibles, enemyMgr, hawks);
                 }
             }
         }

@@ -45,34 +45,32 @@ public final class LevelManager {
 
     /** Load a specific level number, resetting all per-level state. */
     public void loadLevel(int level, CollectibleManager collectibles, EnemyManager enemies,
-                          PowerupManager powerups, HawkManager hawks) {
+                          HawkManager hawks) {
         currentLevel = level;
         tmap.loadMap("maps", "map" + level + ".txt");
         setBoundaries(20, 2035, 65, 480);
         positionIgloo();
         collectibles.loadLevel(level);
         enemies.loadLevel(level);
-        powerups.loadLevel(level);
-        powerups.deactivate();
         hawks.loadLevel(level);
     }
 
     /** Load the very first level (called on a new game). */
     public void loadFirstLevel(CollectibleManager collectibles, EnemyManager enemies,
-                               PowerupManager powerups, HawkManager hawks) {
-        loadLevel(FIRST_LEVEL, collectibles, enemies, powerups, hawks);
+                               HawkManager hawks) {
+        loadLevel(FIRST_LEVEL, collectibles, enemies, hawks);
     }
 
     /** Advance to the next level. */
     public void loadNextLevel(CollectibleManager collectibles, EnemyManager enemies,
-                              PowerupManager powerups, HawkManager hawks) {
-        loadLevel(currentLevel + 1, collectibles, enemies, powerups, hawks);
+                              HawkManager hawks) {
+        loadLevel(currentLevel + 1, collectibles, enemies, hawks);
     }
 
     /** Reload the current level (used by the Play-Again button). */
     public void reloadCurrent(CollectibleManager collectibles, EnemyManager enemies,
-                              PowerupManager powerups, HawkManager hawks) {
-        loadLevel(currentLevel, collectibles, enemies, powerups, hawks);
+                              HawkManager hawks) {
+        loadLevel(currentLevel, collectibles, enemies, hawks);
     }
 
     private void positionIgloo() {

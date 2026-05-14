@@ -22,12 +22,14 @@ public final class GameState {
     public static final int LIVES_PER_LEVEL = 3;
 
     public int lives = LIVES_PER_LEVEL;
+    public int shields = 0;            // shield-powerup charges; each absorbs one hit
     public long flickerStartTime = 0;
 
     /** Reset the per-run flags to the start-of-game defaults (called on new game / restart). */
     public void resetForNewGame() {
         levelCompleted = false;
         lives = LIVES_PER_LEVEL;
+        shields = 0;
         gameOver = false;
         gameCompleted = false;
         gameOverSoundPlayed = false;
@@ -37,6 +39,7 @@ public final class GameState {
     /** Reset only the per-level flags (called when crossing into the next level). */
     public void resetForNewLevel() {
         lives = LIVES_PER_LEVEL;
+        shields = 0;
         gameOverSoundPlayed = false;
         isFlickering = false;
     }
