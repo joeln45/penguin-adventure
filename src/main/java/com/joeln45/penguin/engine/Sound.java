@@ -141,7 +141,17 @@ public class Sound extends Thread {
 
         sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY); // Loop MIDI continuously
         sequencer.start();
+        int trackCount = sequence.getTracks().length;
+        boolean appliedMute = false;
         while (sequencer.isRunning()) {
+            // React to mute toggles by silencing/un-silencing every track. The
+            // sequencer keeps advancing, so unmute resumes mid-song.
+            if (globalMute != appliedMute) {
+                for (int t = 0; t < trackCount; t++) {
+                    sequencer.setTrackMute(t, globalMute);
+                }
+                appliedMute = globalMute;
+            }
             Thread.sleep(100);
         }
         sequencer.close();
