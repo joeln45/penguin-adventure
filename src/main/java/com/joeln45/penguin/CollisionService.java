@@ -11,7 +11,7 @@ import com.joeln45.penguin.engine.TileMap;
 /**
  * Stateless collision math for the platformer.
  *
- * <p>Methods are pure with one exception: {@link #checkTileCollision(Sprite, TileMap)}
+ * <p>Methods are pure with one exception: {@link #checkTileCollision(Sprite, TileMap, long)}
  * mutates the sprite's position and velocity to resolve the collision (the standard
  * "detect + respond" pattern). It does <em>not</em> mutate any game state — the caller
  * receives a {@link TileCollisionResult} and applies the consequences itself.
@@ -67,7 +67,7 @@ public final class CollisionService {
      * collide with any solid tile on the side it is moving toward. Used for
      * enemy turn-around logic.
      */
-    public static boolean checkEnemyTileCollision(Sprite enemy, TileMap tmap) {
+    public static boolean checkEnemyTileCollision(Sprite enemy, TileMap tmap, long elapsed) {
         float ex = enemy.getX();
         float ey = enemy.getY();
         float ew = enemy.getWidth();
@@ -77,7 +77,8 @@ public final class CollisionService {
         float tileWidth = tmap.getTileWidth();
         float tileHeight = tmap.getTileHeight();
 
-        float nextX = ex + evx;
+        // Velocity is in pixels-per-millisecond, so project a full frame ahead.
+        float nextX = ex + evx * elapsed;
 
         int tileX = evx > 0
                 ? (int) ((nextX + ew - 2) / tileWidth)
@@ -99,8 +100,11 @@ public final class CollisionService {
      * Detects and resolves tile collisions for a sprite this frame, returning
      * a result describing what happened. Mutates the sprite's position/velocity
      * as part of collision response; does not touch any other state.
+     *
+     * @param elapsed milliseconds since the last frame — used to project the
+     *                sprite's position a full frame ahead (velocity is in px/ms).
      */
-    public static TileCollisionResult checkTileCollision(Sprite s, TileMap tmap) {
+    public static TileCollisionResult checkTileCollision(Sprite s, TileMap tmap, long elapsed) {
         List<Tile> collidedTiles = new ArrayList<>();
         boolean horizontalCollision = false;
         boolean landed = false;
@@ -120,8 +124,10 @@ public final class CollisionService {
             return new TileCollisionResult(collidedTiles, false, false, onGround);
         }
 
-        float nextX = sx + velocityX;
-        float nextY = sy + velocityY;
+        // Velocity is in pixels-per-millisecond; project a full frame ahead so
+        // collision is detected before the sprite actually penetrates the tile.
+        float nextX = sx + velocityX * elapsed;
+        float nextY = sy + velocityY * elapsed;
 
         // Horizontal sweep
         if (velocityX != 0) {
@@ -156,7 +162,7 @@ public final class CollisionService {
 
         sx = s.getX();
         velocityY = s.getVelocityY();
-        nextY = sy + velocityY;
+        nextY = sy + velocityY * elapsed;
 
         // Vertical sweep
         if (velocityY != 0) {

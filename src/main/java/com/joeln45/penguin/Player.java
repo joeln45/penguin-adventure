@@ -17,14 +17,22 @@ public final class Player {
     private static final float GRAVITY = 0.0006f;
     private static final float MOVE_SPEED = 0.15f;
     private static final float JUMP_SPEED = -0.32f;
+    /** Short-hop ceiling: max upward speed retained when jump is released early. */
+    private static final float SHORT_HOP_SPEED = 0.12f;
     private static final float TERMINAL_VELOCITY = 0.3f;
     private static final float ACCELERATION = 0.01f;
     private static final float DECELERATION = 0.008f;
     private static final float JUMP_BOOST_FACTOR = 1.1f;
 
+    /** Grace window after walking off a ledge during which a jump still fires. */
+    private static final long COYOTE_TIME_MS = 100;
+    /** Window before landing during which a jump press is remembered and auto-fires. */
+    private static final long JUMP_BUFFER_MS = 150;
+
     private final Sprite sprite;
-    private boolean usedAirJump = false; // air-jump consumed this airborne span
-    private boolean lastCanJump = false; // ground-state from previous frame
+    private boolean usedAirJump = false;  // air-jump consumed this airborne span
+    private boolean lastCanJump = false;  // ground-state from previous frame
+    private long    lastGroundedAt = 0;   // wall-clock ms when we last touched ground
 
     public Player(Animation idleAnim) {
         this.sprite = new Sprite(idleAnim);
@@ -38,6 +46,7 @@ public final class Player {
         sprite.show();
         usedAirJump = false;
         lastCanJump = false;
+        lastGroundedAt = 0;
     }
 
     /**
@@ -50,28 +59,53 @@ public final class Player {
      */
     public boolean update(long elapsed, InputHandler input, boolean canJump,
                           boolean doubleJumpAvailable) {
-        // Reset the air-jump credit whenever we transition onto solid ground.
+        long now = System.currentTimeMillis();
+
+        // Reset the air-jump credit whenever we transition onto solid ground,
+        // and stamp the time so coyote-jump can use it.
         if (canJump && !lastCanJump) {
             usedAirJump = false;
         }
+        if (canJump) {
+            lastGroundedAt = now;
+        }
         lastCanJump = canJump;
 
-        // Gravity with terminal velocity
-        float newVy = sprite.getVelocityY() + (GRAVITY * elapsed);
-        if (newVy > TERMINAL_VELOCITY) newVy = TERMINAL_VELOCITY;
-        sprite.setVelocityY(newVy);
+        // Gravity with terminal velocity — but when standing on solid ground
+        // hold vy at zero so the body doesn't slowly drift through the floor
+        // between landing frames (which used to cause horizontal-sweep snags).
+        if (canJump) {
+            sprite.setVelocityY(0);
+        } else {
+            float newVy = sprite.getVelocityY() + (GRAVITY * elapsed);
+            if (newVy > TERMINAL_VELOCITY) newVy = TERMINAL_VELOCITY;
+            sprite.setVelocityY(newVy);
+        }
 
-        // Jump (ground jump or, with powerup active, a single air jump)
+        // Jump trigger combines three game-feel tricks:
+        //   - coyote time: 100 ms grace after walking off a ledge
+        //   - jump buffer: 150 ms remembered press window before landing
+        //   - air jump (with double-jump powerup): one extra mid-air jump
         boolean jumped = false;
-        if (input.isJump()) {
-            if (canJump) {
+        boolean withinBuffer = (now - input.jumpPressedAt()) <= JUMP_BUFFER_MS;
+        boolean withinCoyote = (now - lastGroundedAt) <= COYOTE_TIME_MS;
+
+        if (input.isJump() && withinBuffer) {
+            if (canJump || withinCoyote) {
                 doJump(input);
+                lastGroundedAt = 0; // burn coyote so we can't re-use it mid-air
                 jumped = true;
             } else if (doubleJumpAvailable && !usedAirJump) {
                 doJump(input);
                 usedAirJump = true;
                 jumped = true;
             }
+        }
+
+        // Variable jump height: releasing jump while rising clips the upward
+        // velocity to SHORT_HOP_SPEED, so a quick tap = small hop.
+        if (sprite.getVelocityY() < -SHORT_HOP_SPEED && !input.isJumpHeld()) {
+            sprite.setVelocityY(-SHORT_HOP_SPEED);
         }
 
         // Horizontal movement with acceleration / deceleration

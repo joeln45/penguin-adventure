@@ -60,7 +60,7 @@ public final class EnemyManager {
 
             enemy.update(elapsed);
 
-            if (CollisionService.checkEnemyTileCollision(enemy, tmap)) {
+            if (CollisionService.checkEnemyTileCollision(enemy, tmap, elapsed)) {
                 enemy.setSpeedX(-enemy.getSpeedX());
                 movingRight[i] = !movingRight[i];
                 enemy.setScale(movingRight[i] ? 1.0f : -1.0f, 1.0f);

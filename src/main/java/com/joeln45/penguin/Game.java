@@ -59,6 +59,7 @@ public class Game extends GameCore {
     EnemyManager enemyMgr = new EnemyManager();
     PowerupManager powerups = new PowerupManager();
     HawkManager hawks = new HawkManager();
+    ParticleManager particles = new ParticleManager();
     LevelManager levelMgr;
     // Aliases (set after levelMgr is constructed) so existing call sites keep compiling
     TileMap tmap;
@@ -184,6 +185,7 @@ public class Game extends GameCore {
         wasOnGround = false;
         state.resetForNewGame();
         levelMgr.loadLevel(level, collectibles, enemyMgr, powerups, hawks);
+        particles.reset();
     }
 
     /**
@@ -228,6 +230,7 @@ public class Game extends GameCore {
         enemyMgr.draw(g, xo, yo, input.isDebug());
         hawks.draw(g, xo, yo, input.isDebug());
         powerups.draw(g, xo, yo);
+        particles.draw(g, xo, yo);
 
         HudRenderer.drawStarCounter(g, collectibles.getStarsCollected(), collectibles.total());
         HudRenderer.drawDoubleJumpIndicator(g, powerups.remainingMs());
@@ -386,11 +389,18 @@ public class Game extends GameCore {
         horizontalCollision = false;
 
         CollisionService.TileCollisionResult tileResult =
-                CollisionService.checkTileCollision(player, tmap);
+                CollisionService.checkTileCollision(player, tmap, elapsed);
         collidedTiles = tileResult.collidedTiles;
         if (tileResult.horizontalCollision) horizontalCollision = true;
-        if (tileResult.landedOnGround) { canJump = true; wasOnGround = true; }
-        if (tileResult.onGround) canJump = true;
+        if (tileResult.landedOnGround) {
+            wasOnGround = true;
+            // Puff of dust at the player's feet on touchdown.
+            particles.spawnLandingDust(player.getX() + player.getWidth() / 2f,
+                                       player.getY() + player.getHeight());
+        }
+        // Recompute canJump every frame so walking off a ledge cleanly drops the
+        // grounded flag (otherwise gravity-hold in Player would let us air-walk).
+        canJump = tileResult.landedOnGround || tileResult.onGround;
 
         // Update flickering state
         if (state.isFlickering) {
@@ -418,6 +428,7 @@ public class Game extends GameCore {
         // Update collectibles (animation + pickup)
         collectibles.update(elapsed, player);
         powerups.update(elapsed, player);
+        particles.update(elapsed);
 
         // Update enemies (movement + player hit detection)
         boolean enemyHit = enemyMgr.update(elapsed, player, tmap);
