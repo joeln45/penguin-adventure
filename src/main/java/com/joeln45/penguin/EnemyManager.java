@@ -38,9 +38,9 @@ public final class EnemyManager {
             addEnemy(1000, 130);
             addEnemy(1500, 451);
         } else if (level == 3) {
-            addEnemy(384, 160);   // patrols the row-6 left long platform
-            addEnemy(1184, 160);  // patrols the row-6 right long platform
-            addEnemy(1050, 224);  // patrols the row-8 long platform
+            addEnemy(384, 160);   // patrols row-6 left platform (walled by row-5 `13`s)
+            addEnemy(1050, 224);  // patrols row-8 long platform (walled by row-7 `13`s)
+            addEnemy(550, 452);   // patrols the ground
         }
 
         movingRight = new boolean[enemies.size()];

@@ -36,9 +36,9 @@ public final class CollectibleManager {
             addStar(1050, 70);
             addStar(1380, 375);
         } else if (level == 3) {
-            addStar(192, 320);   // easy — on the row-11 `efg` platform
-            addStar(832, 224);   // medium — left side of the row-8 long platform
-            addStar(1100, 96);   // hard — high up, requires double-jump
+            addStar(1184, 160);   // easy — on top of the row-6 right platform
+            addStar(1340, 224);   // medium — on top of the row-8 bridge platform
+            addStar(1100, 96);    // hard — mid-air, requires double-jump from row 8
         }
     }
 

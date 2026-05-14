@@ -1,9 +1,9 @@
 64 16 32 32
 // Level 3 — final challenge stage.
-// Uses the desert/stone tile vocabulary from map1: long `cahhhhh8d`
-// platforms for dino patrols, `efg`/`13` decorations, and the same
-// right-side stair (`1222`, `1228555`, `178999999`) leading up to the
-// igloo at the top-right.
+// Two upper platform tiers (rows 6 and 8) for action, a single
+// staircase climb on the left (rows 11→14) so the player can reach
+// them, plus a row-8 bridge platform that links the long mid platform
+// to the right-side stair leading up to the igloo.
 #s=stoneBlock.png
 #1=1.png
 #2=2.png
@@ -28,14 +28,14 @@ ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
 s..............................................................s
 s..............................................................s
 s..............................................................s
-s........13......13............13..............................s
+s.......13.....13................13.....13.....................s
 s.......cahhhhh8d................cahhhhh8d.................1222s
-s.......................................................1228555s
-s.........................cahhhhhhh8d.................178999999s
+s.........................13.......13...................1228555s
+s.........................cahhhhhhh8d....cahhhhh8d....178999999s
 s..............................................................s
-s..............................................................s
-s.....efg.......efg.......efg.........efg......................s
-s..............................................................s
-s..............................................................s
-s..............................................................s
+s............efg...............................................s
+s.........18a3.................................................s
+s........1855a3................................................s
+s.......185555a3...............................................s
+s......18555555a3..............................................s
 ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss

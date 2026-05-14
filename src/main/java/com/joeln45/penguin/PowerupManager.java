@@ -44,7 +44,7 @@ public final class PowerupManager {
         } else if (level == 2) {
             spawnAt(1200, 400);
         } else if (level == 3) {
-            spawnAt(650, 415);
+            spawnAt(650, 448);   // sits clearly on the ground in an open area
         }
     }
 
