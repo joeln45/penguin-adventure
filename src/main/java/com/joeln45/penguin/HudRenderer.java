@@ -94,6 +94,26 @@ public final class HudRenderer {
         g.drawString(String.format("2x JUMP - %ds", seconds), x + 12, y + 24);
     }
 
+    /** Dimmed overlay with a "PAUSED" caption — shown while the window has lost focus. */
+    public static void drawPausedOverlay(Graphics2D g, Font titleFont, int containerWidth, int containerHeight) {
+        g.setColor(new Color(0, 0, 0, 150));
+        g.fillRect(0, 0, containerWidth, containerHeight);
+
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setFont(titleFont);
+        g.setColor(Color.WHITE);
+        String text = "PAUSED";
+        FontMetrics fm = g.getFontMetrics();
+        int x = (containerWidth - fm.stringWidth(text)) / 2;
+        int y = containerHeight / 2;
+        g.drawString(text, x, y);
+
+        g.setFont(new Font("Arial", Font.PLAIN, 20));
+        String hint = "Click the window to resume";
+        fm = g.getFontMetrics();
+        g.drawString(hint, (containerWidth - fm.stringWidth(hint)) / 2, y + 40);
+    }
+
     /** Full-screen game-over / level-complete overlay with a styled action button. */
     public static void drawGameOverScreen(Graphics2D g, Font gameOverFont, boolean gameCompleted,
                                           Rectangle playAgainBtn, Rectangle restartBtn,

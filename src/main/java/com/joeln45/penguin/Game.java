@@ -37,6 +37,7 @@ public class Game extends GameCore {
     boolean horizontalCollision = false;
     boolean canJump = false;
     boolean wasOnGround = false;
+    boolean paused = false;          // true while the window has lost focus
     static final long FLICKER_DURATION_MS = 2000;
 
     // Menu button variables
@@ -131,6 +132,12 @@ public class Game extends GameCore {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 handleMouseClick(evt);
             }
+        });
+
+        // Pause gameplay when the window loses focus (e.g. alt-tab)
+        addWindowFocusListener(new java.awt.event.WindowFocusListener() {
+            public void windowGainedFocus(java.awt.event.WindowEvent e) { paused = false; }
+            public void windowLostFocus(java.awt.event.WindowEvent e)   { paused = true; }
         });
 
         // Load the background images and create the parallax background
@@ -230,6 +237,8 @@ public class Game extends GameCore {
         if (state.gameOver) {
             HudRenderer.drawGameOverScreen(g, gameOverFont, state.gameCompleted,
                     playAgain_Button, restartGame_Button, getWidth(), getHeight());
+        } else if (paused) {
+            HudRenderer.drawPausedOverlay(g, gameOverFont, getWidth(), getHeight());
         }
     
         if (input.isDebug()) {
@@ -364,6 +373,7 @@ public class Game extends GameCore {
      * @param elapsed The elapsed time between this call and the previous call of elapsed
      */
     public void update(long elapsed) {
+        if (paused) return;
         if (state.gameOver) {
             if (!state.gameOverSoundPlayed) {
                 AssetLoader.gameOverSound().start();
