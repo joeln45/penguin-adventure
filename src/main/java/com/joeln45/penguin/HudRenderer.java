@@ -46,9 +46,10 @@ public final class HudRenderer {
         g.drawString(numbersText, numbersX, 85);
     }
 
-    /** Hearts row (top-right area). */
+    /** Hearts row (top-right area), anchored just left of the sound icon. */
     public static void drawLives(Graphics2D g, Image heartPic, int lives, int containerWidth) {
-        int heartX = containerWidth - 130;
+        // rightmost heart ends 10 px left of the sound icon
+        int heartX = containerWidth - 50 - 10 - HEART_SIZE - (lives - 1) * HEART_GAP;
         for (int i = 0; i < lives; i++) {
             g.drawImage(heartPic, heartX, HEART_Y, HEART_SIZE, HEART_SIZE, null);
             heartX += HEART_GAP;
