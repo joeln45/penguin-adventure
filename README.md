@@ -11,9 +11,9 @@ https://github.com/user-attachments/assets/4a86e10f-6561-4cc2-b6f8-9db6b5eb91d7
 
 ## Screenshots
 
-| Main menu | Level 1 | Level 2 |
-|---|---|---|
-| ![Menu](docs/media/menu.png) | ![Level 1](docs/media/level1.png) | ![Level 2](docs/media/level2.png) |
+| Main menu | Level 1 | Level 2 | Level 3 |
+|---|---|---|---|
+| ![Menu](docs/media/menu.png) | ![Level 1](docs/media/level1.png) | ![Level 2](docs/media/level2.png) | ![Level 3](docs/media/level3.png) |
 
 ## Controls
 
