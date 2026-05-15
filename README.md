@@ -21,7 +21,7 @@ https://github.com/user-attachments/assets/4a86e10f-6561-4cc2-b6f8-9db6b5eb91d7
 |---|---|
 | `←` / `→` | Move left / right |
 | `↑` | Jump (tap for short hop, hold for full height) |
-| Tap `↑` mid-air | Free double-jump (one per airborne span) |
+| Tap `↑` mid-air | Mid-air jump (one per airborne span) |
 | `B` | Toggle debug overlay (hitboxes, FPS, screen bounds) |
 | `Esc` | Quit |
 
@@ -61,33 +61,31 @@ mvn clean package
 ## Features
 
 ### Gameplay
-- Three hand-designed levels with a level-select menu and a level-complete transition.
-- Parallax-scrolling desert backgrounds (four layers).
-- Patrolling dino enemy that turns at walls; chasing hawk that tracks the player when in sight.
-- Collectible spinning stars (3 per level) and a shield pickup that absorbs one hit.
-- 3 lives per level — flicker invincibility for 2 s after taking damage.
+- Three hand-designed levels with a level-select menu.
+- Four-layer parallax desert backgrounds.
+- Patrolling dino enemy and a chasing hawk that tracks the player on sight.
+- Collectible stars (3 per level), shield pickup that absorbs one hit, 3 lives per level.
 
 ### Game feel
-- **Coyote time** — 100 ms grace to jump after walking off a ledge.
-- **Jump buffering** — pressing jump up to 150 ms before landing still fires.
+- **Coyote time** (100 ms) to jump after walking off a ledge.
+- **Jump buffering** (150 ms) so an early jump press still fires on landing.
 - **Variable jump height** — tap for a short hop, hold for a full jump.
-- **Free mid-air jump** — one per airborne span, resets on touching ground.
-- **Landing-dust particles** — small puff at the player's feet on touchdown.
-- **Pause on window blur** — alt-tab freezes gameplay and dims the screen.
+- One free mid-air jump per airborne span.
+- Landing-dust particles, and pause-on-blur when the window loses focus.
 
 ### Audio
-- WAV + MIDI audio with custom sound filters (echo, fade-in, volume boost).
-- Mute toggle silences both WAV sound-effects **and** MIDI background music.
+- WAV + MIDI with custom sound filters (echo, fade-in, volume boost).
+- Mute toggle silences both WAV effects and MIDI music.
 
 ### Engineering
-- Tile-based level loading from plain-text map files in `src/main/resources/maps/`.
-- AABB collision detection with two-pass swept resolution (X then Y), frame-projected positions, and integer-pixel snapping.
-- GitHub Actions CI runs `mvn -B -ntp verify` on Ubuntu / Temurin 17.
-- JUnit 5 test suite (22 tests) covering collision math, velocity clamping, and the sound filters.
+- Tile-based level loading from text map files in `src/main/resources/maps/`.
+- Two-pass swept AABB collision (X then Y) with frame-projected positions.
+- GitHub Actions CI on Ubuntu / Temurin 17.
+- JUnit 5 suite covering collision math, velocity clamping, and the sound filters.
 
 ## Architecture
 
-The original `Game.java` from coursework was a 1,276-line god class. The current code splits responsibilities into focused components — `Game` is the orchestrator that calls into per-concern managers, and `CollisionService` is a stateless helper:
+The original `Game.java` from coursework was a 1,276-line god class. I split it into focused components: `Game` orchestrates the main loop, per-concern managers own their entities, and `CollisionService` is a stateless helper for the math.
 
 ```mermaid
 graph TB
@@ -137,11 +135,11 @@ graph TB
 
 ### Design notes
 
-- **One manager per concern.** Each entity type (`CollectibleManager`, `EnemyManager`, `HawkManager`, `ShieldManager`, `ParticleManager`) owns its sprites, per-level spawn table, update loop, and draw call. Adding a new pickup type is a copy-paste of an existing manager.
-- **`CollisionService` is stateless.** Pure functions in / pure functions out makes the math straightforward to unit-test (`CollisionServiceTest`) and removes a class of "stale flag" bugs.
-- **`GameState` is a plain data bag.** No behaviour — just flags (`gameOver`, `isMuted`, `shields`, `lives`). `Game` drives all transitions explicitly so the menu / playing / game-over / completed flow is readable from one place.
-- **`InputHandler` decouples from AWT.** Game polls `isMoveLeft()` / `isJump()` / `jumpPressedAt()` instead of listening for `KeyEvent`s directly. This is what makes coyote-time and jump-buffer easy to implement.
-- **Physics in pixels-per-millisecond.** `Sprite.update(elapsed)` advances position by `velocity * elapsed`, so collision detection has to project a full frame ahead (`sx + vx * elapsed`) — not 1 ms ahead. Forgetting this was the cause of every wall-snag and air-walk bug during development.
+- **One manager per concern.** Each entity type owns its sprites, spawn table, update loop, and draw call, so adding a new pickup is essentially copying an existing manager.
+- **`CollisionService` is stateless.** Pure functions make the math easy to unit-test in `CollisionServiceTest`.
+- **`GameState` is a plain data bag.** Just flags and counters; `Game` drives all transitions explicitly.
+- **`InputHandler` decouples from AWT.** Game polls `isJump()` and `jumpPressedAt()` instead of listening for `KeyEvent`s, which is what makes coyote-time and jump-buffer easy.
+- **Physics is pixels-per-millisecond.** `Sprite.update(elapsed)` advances by `velocity * elapsed`, so collision has to project a full frame ahead (`sx + vx * elapsed`), not 1 ms.
 
 ## Project layout
 
@@ -174,46 +172,23 @@ src/
 ## Tech stack
 
 - **Java 17**, Swing / AWT
-- Custom **Game2D** engine (sprites, animation, tilemaps, sound) — the base library was provided in the CSCU9N6 module by David Cairns; the four sound filters and all gameplay code are mine
-- **Maven** for build & dependency management
-- **JUnit 5** for testing, **GitHub Actions** for CI
-- Assets: hand-edited PNG sprite sheets + WAV / MIDI audio
+- Custom **Game2D** engine (sprites, animation, tilemaps, sound). The base library is from CSCU9N6 (David Cairns); all gameplay code and the sound filters are mine.
+- **Maven** for build, **JUnit 5** for tests, **GitHub Actions** for CI
 
 ## What I learned
 
-This started as a Year-3 university coursework project. Modernising it for portfolio taught me:
+This started as Year-3 coursework. Modernising it for portfolio taught me:
 
-- **Game-feel is mostly invisible.** Coyote time, jump buffering, variable jump height — none are visible to a player, but together they're the difference between a game that feels mushy and one that feels tight. The implementation is ~30 lines.
-- **Frame-projected collision matters.** Tile collision check has to ask *"where will I be next frame?"* not *"where am I now?"*. Getting this subtle bug right killed every wall-snag and air-walk symptom I'd been chasing for hours.
-- **Refactoring a god class is mostly extraction, not redesign.** Cutting `Game.java` from 1,276 → ~520 lines was twelve small extractions, each preserving behaviour. The architecture diagram above didn't exist when I started — it fell out of repeatedly asking "what is this method really about?".
-- **Resource loading the right way.** Moving from `new FileInputStream(...)` to classpath resources (`getResourceAsStream`) so the build runs from a JAR, not just an IDE.
-- **Build tooling migration.** Converting an Eclipse project to Maven, untangling source/resource layout, and making the project IDE-agnostic.
-- **CI catches what local doesn't.** Linux is case-sensitive; Windows isn't. Forgetting to commit `CollisionService.java` after a multi-file refactor compiled fine locally and failed instantly on CI.
-
-## Roadmap
-
-- [x] Maven build + classpath resources
-- [x] README v1 + screenshots
-- [x] GitHub Actions CI on Ubuntu / Temurin 17
-- [x] Refactor `Game.java` into `Player`, `EnemyManager`, `CollisionService`, etc.
-- [x] JUnit 5 tests for collision, velocity & sound filters
-- [x] Chasing hawk enemy
-- [x] Third level with level-select menu
-- [x] 3 lives per level
-- [x] Pause on window blur with overlay
-- [x] Mute toggle silences MIDI background music
-- [x] Two-pass swept collision with frame-projected positions
-- [x] Coyote time, jump buffering, variable jump height
-- [x] Free mid-air jump (one per airborne span)
-- [x] Landing-dust particle system
-- [x] Shield powerup that absorbs one hit
-- [x] Tagged v1.0.0 release with downloadable JAR
+- **Game-feel is mostly invisible.** Coyote time, jump buffering and variable jump height are a few dozen lines each, but together they make movement feel tight instead of mushy.
+- **Frame-projected collision.** The tile check has to ask *"where will I be next frame?"*, not *"where am I now?"*. Fixing this killed every wall-snag and air-walk bug I had.
+- **Refactoring a god class is mostly extraction.** Cutting `Game.java` from 1,276 to ~520 lines was a series of small extractions, each preserving behaviour.
+- **Classpath resources over `FileInputStream`.** That's what makes the build runnable from a JAR and not just an IDE.
+- **CI catches what local doesn't.** Linux is case-sensitive, Windows isn't. Forgetting to commit a renamed file compiled fine locally and failed instantly on CI.
 
 ## Credits
 
 - **Code & gameplay design:** Joel Nirmal
 - **Game2D engine base:** David Cairns (CSCU9N6, University of Stirling)
-- **Background art:** sourced from the CSCU9N6 asset pack
 
 ## License
 
