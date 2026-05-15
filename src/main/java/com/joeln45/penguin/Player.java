@@ -4,35 +4,30 @@ import com.joeln45.penguin.engine.Animation;
 import com.joeln45.penguin.engine.Sprite;
 
 /**
- * The penguin player: holds the sprite, physics constants and the per-frame
- * movement logic (gravity, jumping, horizontal acceleration/deceleration).
- *
- * <p>The owning {@link Game} is still responsible for collision detection and
- * for telling the player whether it's allowed to jump this frame.
- *
- * @author Joel Nirmal
+ * The penguin. Handles physics, gravity and jump logic. The Game class still
+ * runs collision detection and tells us whether we're allowed to jump.
  */
 public final class Player {
 
     private static final float GRAVITY = 0.0006f;
     private static final float MOVE_SPEED = 0.15f;
     private static final float JUMP_SPEED = -0.32f;
-    /** Short-hop ceiling: max upward speed retained when jump is released early. */
+    // max upward speed kept after an early jump release (short hop)
     private static final float SHORT_HOP_SPEED = 0.12f;
     private static final float TERMINAL_VELOCITY = 0.3f;
     private static final float ACCELERATION = 0.01f;
     private static final float DECELERATION = 0.008f;
     private static final float JUMP_BOOST_FACTOR = 1.1f;
 
-    /** Grace window after walking off a ledge during which a jump still fires. */
+    // jump can still fire 100ms after walking off a ledge
     private static final long COYOTE_TIME_MS = 100;
-    /** Window before landing during which a jump press is remembered and auto-fires. */
+    // a jump press up to 150ms before landing still counts
     private static final long JUMP_BUFFER_MS = 150;
 
     private final Sprite sprite;
-    private boolean usedAirJump = false;  // air-jump consumed this airborne span
-    private boolean lastCanJump = false;  // ground-state from previous frame
-    private long    lastGroundedAt = 0;   // wall-clock ms when we last touched ground
+    private boolean usedAirJump = false;
+    private boolean lastCanJump = false;
+    private long    lastGroundedAt = 0;
 
     public Player(Animation idleAnim) {
         this.sprite = new Sprite(idleAnim);
@@ -49,19 +44,11 @@ public final class Player {
         lastGroundedAt = 0;
     }
 
-    /**
-     * Applies gravity, jump, and horizontal movement for this frame. Caller
-     * passes in the latest input snapshot and whether a jump is permitted
-     * (the player just touched ground). A free mid-air jump is always
-     * available once per airborne span.
-     *
-     * @return true if a jump was initiated (caller should play the sfx)
-     */
+    /** Runs movement + jump for this frame. Returns true if a jump fired. */
     public boolean update(long elapsed, InputHandler input, boolean canJump) {
         long now = System.currentTimeMillis();
 
-        // Reset the air-jump credit whenever we transition onto solid ground,
-        // and stamp the time so coyote-jump can use it.
+        // refill the mid-air jump when we land
         if (canJump && !lastCanJump) {
             usedAirJump = false;
         }
@@ -70,9 +57,7 @@ public final class Player {
         }
         lastCanJump = canJump;
 
-        // Gravity with terminal velocity — but when standing on solid ground
-        // hold vy at zero so the body doesn't slowly drift through the floor
-        // between landing frames (which used to cause horizontal-sweep snags).
+        // gravity, but keep vy at 0 on the ground so we don't drift through it
         if (canJump) {
             sprite.setVelocityY(0);
         } else {
@@ -81,10 +66,7 @@ public final class Player {
             sprite.setVelocityY(newVy);
         }
 
-        // Jump trigger combines three game-feel tricks:
-        //   - coyote time: 100 ms grace after walking off a ledge
-        //   - jump buffer: 150 ms remembered press window before landing
-        //   - free air jump: one extra mid-air jump per airborne span
+        // jump = (on ground OR coyote window OR free mid-air jump) AND buffered press
         boolean jumped = false;
         boolean withinBuffer = (now - input.jumpPressedAt()) <= JUMP_BUFFER_MS;
         boolean withinCoyote = (now - lastGroundedAt) <= COYOTE_TIME_MS;
@@ -92,7 +74,7 @@ public final class Player {
         if (input.isJump() && withinBuffer) {
             if (canJump || withinCoyote) {
                 doJump(input);
-                lastGroundedAt = 0; // burn coyote so we can't re-use it mid-air
+                lastGroundedAt = 0; // don't let coyote re-fire mid-air
                 jumped = true;
             } else if (!usedAirJump) {
                 doJump(input);
@@ -101,13 +83,11 @@ public final class Player {
             }
         }
 
-        // Variable jump height: releasing jump while rising clips the upward
-        // velocity to SHORT_HOP_SPEED, so a quick tap = small hop.
+        // variable jump height: releasing UP while rising clips upward velocity
         if (sprite.getVelocityY() < -SHORT_HOP_SPEED && !input.isJumpHeld()) {
             sprite.setVelocityY(-SHORT_HOP_SPEED);
         }
 
-        // Horizontal movement with acceleration / deceleration
         if (input.isMoveRight()) {
             float vx = sprite.getSpeedX() + (ACCELERATION * elapsed);
             if (vx > MOVE_SPEED) vx = MOVE_SPEED;
@@ -135,7 +115,6 @@ public final class Player {
             }
         }
 
-        // Advance sprite animation + apply velocity
         sprite.update(elapsed);
         return jumped;
     }
@@ -144,7 +123,7 @@ public final class Player {
         sprite.setAnimationSpeed(1.8f);
         sprite.setVelocityY(JUMP_SPEED);
         input.consumeJump();
-        // Small horizontal boost when jumping while moving
+        // small horizontal boost when jumping mid-run
         if (input.isMoveRight()) {
             sprite.setSpeedX(MOVE_SPEED * JUMP_BOOST_FACTOR);
         } else if (input.isMoveLeft()) {

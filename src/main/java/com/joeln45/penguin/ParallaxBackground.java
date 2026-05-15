@@ -4,13 +4,9 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 
 /**
- * Four-layer horizontally-scrolling parallax background. Each layer scrolls at
- * its own speed; the further layers move slower for a sense of depth.
- *
- * <p>Two copies of each layer are tracked ({@code x1}, {@code x2}) so the
- * image can wrap seamlessly as it leaves the viewport.
- *
- * @author Joel Nirmal
+ * Four-layer parallax background. Each layer has its own scroll speed (the
+ * back layers move slower so you get a depth effect) and tracks two copies
+ * (x1, x2) so it can wrap around the viewport without a visible seam.
  */
 public final class ParallaxBackground {
 
@@ -37,14 +33,6 @@ public final class ParallaxBackground {
         }
     }
 
-    /**
-     * Advance scroll positions by one frame.
-     *
-     * @param elapsed   milliseconds since last frame
-     * @param moveRight true if the player intends to move right
-     * @param moveLeft  true if the player intends to move left
-     * @param blocked   true if the player is blocked by a wall (no scroll)
-     */
     public void update(long elapsed, boolean moveRight, boolean moveLeft, boolean blocked) {
         for (int i = 0; i < 4; i++) {
             if (!blocked) {
@@ -56,7 +44,7 @@ public final class ParallaxBackground {
                     x2[i] += LAYER_SPEEDS[i] * elapsed;
                 }
             }
-            // Wrap each layer around the viewport
+            // wrap when one copy goes off-screen
             if (x1[i] + screenWidth <= 0) {
                 x1[i] = x2[i] + screenWidth;
             } else if (x2[i] + screenWidth <= 0) {
@@ -69,7 +57,6 @@ public final class ParallaxBackground {
         }
     }
 
-    /** Draws all four layers with their current scroll offsets. */
     public void draw(Graphics2D g) {
         for (int i = 0; i < 4; i++) {
             g.drawImage(layers[i], (int) x1[i], 0, screenWidth, screenHeight, null);

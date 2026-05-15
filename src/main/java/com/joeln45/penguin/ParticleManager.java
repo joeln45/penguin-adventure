@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Lightweight particle effects for visual juice — currently just dust puffs on
- * landing. Particles are simple coloured circles with velocity, gravity and a
- * fade-out alpha; they don't interact with anything.
- *
- * @author Joel Nirmal
+ * Tiny particle system, currently used for the dust puff when the player
+ * lands. Particles are just coloured circles with velocity, gravity and an
+ * alpha that fades to zero. They don't collide with anything.
  */
 public final class ParticleManager {
 
@@ -23,16 +21,12 @@ public final class ParticleManager {
     private final List<Particle> particles = new ArrayList<>();
     private final Random rng = new Random();
 
-    /** Clear all live particles (call on level change / restart). */
     public void reset() { particles.clear(); }
 
-    /**
-     * Spawn a small puff of dust at the given world position — typically the
-     * player's feet on landing.
-     */
+    /** Spawn a small puff of dust at the given world position. */
     public void spawnLandingDust(float x, float y) {
         for (int i = 0; i < DUST_COUNT; i++) {
-            // Random sideways drift, slight upward kick.
+            // random sideways drift + tiny upward kick
             float vx = (rng.nextFloat() - 0.5f) * 0.20f;
             float vy = -rng.nextFloat() * 0.10f;
             float radius = 3f + rng.nextFloat() * 2f;
@@ -40,7 +34,6 @@ public final class ParticleManager {
         }
     }
 
-    /** Per-frame: advance position, apply gravity, age out dead particles. */
     public void update(long elapsed) {
         for (int i = particles.size() - 1; i >= 0; i--) {
             Particle p = particles.get(i);
@@ -57,7 +50,7 @@ public final class ParticleManager {
 
     public void draw(Graphics2D g, int xo, int yo) {
         for (Particle p : particles) {
-            float t = 1f - (p.ageMs / (float) DUST_LIFE_MS); // 1 → 0 over lifetime
+            float t = 1f - (p.ageMs / (float) DUST_LIFE_MS); // fades from 1 to 0
             int alpha = Math.max(0, Math.min(255, (int) (t * 200)));
             g.setColor(new Color(DUST_COLOR.getRed(), DUST_COLOR.getGreen(),
                                  DUST_COLOR.getBlue(), alpha));
@@ -68,7 +61,6 @@ public final class ParticleManager {
         }
     }
 
-    /** Internal mutable particle state. */
     private static final class Particle {
         float x, y, vx, vy, radius;
         long ageMs;

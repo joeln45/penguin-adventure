@@ -9,26 +9,19 @@ import com.joeln45.penguin.engine.Tile;
 import com.joeln45.penguin.engine.TileMap;
 
 /**
- * Stateless collision math for the platformer.
- *
- * <p>Methods are pure with one exception: {@link #checkTileCollision(Sprite, TileMap, long)}
- * mutates the sprite's position and velocity to resolve the collision (the standard
- * "detect + respond" pattern). It does <em>not</em> mutate any game state — the caller
- * receives a {@link TileCollisionResult} and applies the consequences itself.
- *
- * @author Joel Nirmal
+ * Collision helpers. {@link #checkTileCollision} mutates the sprite to resolve
+ * the collision; everything else is read-only.
  */
 public final class CollisionService {
 
     private CollisionService() {}
 
-    /** Outcome of a per-frame tile-collision check. */
     public static final class TileCollisionResult {
         public final List<Tile> collidedTiles;
         public final boolean horizontalCollision;
-        /** Set when the sprite was actively moving down and contacted a tile this frame. */
+        /** True if the sprite actually hit a tile while falling this frame. */
         public final boolean landedOnGround;
-        /** Set when the sprite was already standing on a tile (no vertical motion). */
+        /** True if the sprite is already resting on a tile (vy == 0). */
         public final boolean onGround;
 
         TileCollisionResult(List<Tile> tiles, boolean hCol, boolean landed, boolean onGround) {
@@ -39,10 +32,7 @@ public final class CollisionService {
         }
     }
 
-    /**
-     * Axis-aligned bounding-box overlap test between two sprites, with a small
-     * hitbox margin to feel less punishing.
-     */
+    /** AABB overlap test with a small margin so the hitboxes feel fair. */
     public static boolean boundingBoxCollision(Sprite s1, Sprite s2) {
         float s1x = s1.getX();
         float s1y = s1.getY();
@@ -62,11 +52,7 @@ public final class CollisionService {
                 s1y + s1h - hitboxMargin > s2y + hitboxMargin);
     }
 
-    /**
-     * Checks whether the sprite, given its current horizontal velocity, would
-     * collide with any solid tile on the side it is moving toward. Used for
-     * enemy turn-around logic.
-     */
+    /** True if the enemy would walk into a wall this frame (used to turn around). */
     public static boolean checkEnemyTileCollision(Sprite enemy, TileMap tmap, long elapsed) {
         float ex = enemy.getX();
         float ey = enemy.getY();
@@ -77,7 +63,7 @@ public final class CollisionService {
         float tileWidth = tmap.getTileWidth();
         float tileHeight = tmap.getTileHeight();
 
-        // Velocity is in pixels-per-millisecond, so project a full frame ahead.
+        // velocity is px/ms, project a full frame ahead
         float nextX = ex + evx * elapsed;
 
         int tileX = evx > 0
@@ -97,12 +83,8 @@ public final class CollisionService {
     }
 
     /**
-     * Detects and resolves tile collisions for a sprite this frame, returning
-     * a result describing what happened. Mutates the sprite's position/velocity
-     * as part of collision response; does not touch any other state.
-     *
-     * @param elapsed milliseconds since the last frame — used to project the
-     *                sprite's position a full frame ahead (velocity is in px/ms).
+     * Resolves tile collisions for one frame. Snaps the sprite to the tile edge
+     * and zeroes the relevant velocity component when it hits.
      */
     public static TileCollisionResult checkTileCollision(Sprite s, TileMap tmap, long elapsed) {
         List<Tile> collidedTiles = new ArrayList<>();
@@ -124,12 +106,11 @@ public final class CollisionService {
             return new TileCollisionResult(collidedTiles, false, false, onGround);
         }
 
-        // Velocity is in pixels-per-millisecond; project a full frame ahead so
-        // collision is detected before the sprite actually penetrates the tile.
+        // velocity is px/ms, so project a full frame ahead before checking
         float nextX = sx + velocityX * elapsed;
         float nextY = sy + velocityY * elapsed;
 
-        // Horizontal sweep
+        // X axis
         if (velocityX != 0) {
             int tileX = velocityX > 0
                     ? (int) ((nextX + sw - 2) / tileWidth)
@@ -148,8 +129,7 @@ public final class CollisionService {
             }
 
             if (localHorizontalCollision) {
-                // Snap to integer pixel positions to avoid sub-pixel jitter
-                // when the sprite width is non-integer.
+                // snap to int pixels so the sprite doesn't jitter when its width isn't whole
                 if (velocityX > 0) {
                     s.setX((float) Math.floor(tileX * tileWidth - sw));
                 } else {
@@ -164,7 +144,7 @@ public final class CollisionService {
         velocityY = s.getVelocityY();
         nextY = sy + velocityY * elapsed;
 
-        // Vertical sweep
+        // Y axis
         if (velocityY != 0) {
             int tileY = velocityY > 0
                     ? (int) ((nextY + sh - 1) / tileHeight)
@@ -183,7 +163,7 @@ public final class CollisionService {
             }
 
             if (verticalCollision) {
-                // Snap to integer pixel positions for stable resting on ledges.
+                // snap to int pixels so the sprite rests cleanly on ledges
                 if (velocityY > 0) {
                     s.setY((float) Math.floor(tileY * tileHeight - sh));
                     s.setVelocityY(0);
@@ -200,10 +180,7 @@ public final class CollisionService {
         }
     }
 
-    /**
-     * Returns true if the sprite is resting on a solid tile (checks one pixel
-     * below its bottom edge).
-     */
+    /** True if there's a solid tile one pixel below the sprite. */
     public static boolean isOnGround(Sprite s, TileMap tmap) {
         float sx = s.getX();
         float sy = s.getY();

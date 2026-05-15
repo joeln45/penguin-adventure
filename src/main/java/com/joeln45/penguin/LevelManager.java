@@ -6,13 +6,8 @@ import com.joeln45.penguin.engine.Sprite;
 import com.joeln45.penguin.engine.TileMap;
 
 /**
- * Tracks which level is active and owns the per-level world: tile map, igloo
- * goal sprite, and screen boundaries.
- *
- * <p>Coordinates with {@link CollectibleManager} and {@link EnemyManager} when
- * advancing levels, but does not own them — they are passed in for reloading.
- *
- * @author Joel Nirmal
+ * Holds the current tile map, igloo goal and screen boundaries. Loads/reloads
+ * a level by re-initialising the entity managers passed in.
  */
 public final class LevelManager {
 
@@ -43,7 +38,6 @@ public final class LevelManager {
     public float bottomBoundary() { return bottomBoundary; }
     public boolean isLastLevel()  { return currentLevel >= LAST_LEVEL; }
 
-    /** Load a specific level number, resetting all per-level state. */
     public void loadLevel(int level, CollectibleManager collectibles, EnemyManager enemies,
                           HawkManager hawks) {
         currentLevel = level;
@@ -55,19 +49,16 @@ public final class LevelManager {
         hawks.loadLevel(level);
     }
 
-    /** Load the very first level (called on a new game). */
     public void loadFirstLevel(CollectibleManager collectibles, EnemyManager enemies,
                                HawkManager hawks) {
         loadLevel(FIRST_LEVEL, collectibles, enemies, hawks);
     }
 
-    /** Advance to the next level. */
     public void loadNextLevel(CollectibleManager collectibles, EnemyManager enemies,
                               HawkManager hawks) {
         loadLevel(currentLevel + 1, collectibles, enemies, hawks);
     }
 
-    /** Reload the current level (used by the Play-Again button). */
     public void reloadCurrent(CollectibleManager collectibles, EnemyManager enemies,
                               HawkManager hawks) {
         loadLevel(currentLevel, collectibles, enemies, hawks);
@@ -79,7 +70,7 @@ public final class LevelManager {
         } else if (currentLevel == 2) {
             igloo.setPosition(1910, 319);
         } else if (currentLevel == 3) {
-            igloo.setPosition(1920, 160);  // top of the right-side stair, like level 1
+            igloo.setPosition(1920, 160);
         }
         igloo.show();
     }

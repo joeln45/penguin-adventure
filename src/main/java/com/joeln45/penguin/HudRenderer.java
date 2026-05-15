@@ -9,12 +9,7 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 
-/**
- * Stateless HUD/overlay rendering for in-game UI: star counter, lives, sound
- * icon (with mute overlay) and the game-over / level-complete screen.
- *
- * @author Joel Nirmal
- */
+/** Draws all the on-screen HUD elements: stars, lives, sound icon, overlays. */
 public final class HudRenderer {
 
     private static final int STAR_PANEL_X = 10;
@@ -29,7 +24,6 @@ public final class HudRenderer {
 
     private HudRenderer() {}
 
-    /** Star counter pill (top-left). */
     public static void drawStarCounter(Graphics2D g, int starsCollected, int total) {
         g.setColor(new Color(0, 0, 0, 120));
         g.fillRoundRect(STAR_PANEL_X, STAR_PANEL_Y, STAR_PANEL_W, STAR_PANEL_H, 10, 10);
@@ -46,9 +40,8 @@ public final class HudRenderer {
         g.drawString(numbersText, numbersX, 85);
     }
 
-    /** Hearts row (top-right area), anchored just left of the sound icon. */
     public static void drawLives(Graphics2D g, Image heartPic, int lives, int containerWidth) {
-        // rightmost heart ends 10 px left of the sound icon
+        // last heart sits 10px to the left of the sound icon
         int heartX = containerWidth - 50 - 10 - HEART_SIZE - (lives - 1) * HEART_GAP;
         for (int i = 0; i < lives; i++) {
             g.drawImage(heartPic, heartX, HEART_Y, HEART_SIZE, HEART_SIZE, null);
@@ -56,7 +49,6 @@ public final class HudRenderer {
         }
     }
 
-    /** Sound icon plus mute overlay. */
     public static void drawSoundIcon(Graphics2D g, Image soundIcon, boolean isMuted, int containerWidth) {
         int x = containerWidth - 50;
         g.drawImage(soundIcon, x, SOUND_ICON_Y, SOUND_ICON_SIZE, SOUND_ICON_SIZE, null);
@@ -69,16 +61,15 @@ public final class HudRenderer {
         }
     }
 
-    /** Returns the screen-space bounds of the sound icon for hit-testing clicks. */
+    /** Bounds of the sound icon, used for click hit-testing. */
     public static Rectangle soundIconBounds(int containerWidth) {
         return new Rectangle(containerWidth - 50, SOUND_ICON_Y, SOUND_ICON_SIZE, SOUND_ICON_SIZE);
     }
 
-    /** Pill showing "SHIELD x N" while the player has shield charges available. */
     public static void drawShieldIndicator(Graphics2D g, int shields) {
         if (shields <= 0) return;
         int x = STAR_PANEL_X;
-        int y = STAR_PANEL_Y + STAR_PANEL_H + 10; // directly under the stars pill
+        int y = STAR_PANEL_Y + STAR_PANEL_H + 10;
         int w = 160;
         int h = 36;
 
@@ -93,7 +84,7 @@ public final class HudRenderer {
         g.drawString(String.format("SHIELD x %d", shields), x + 12, y + 24);
     }
 
-    /** Dimmed overlay with a "PAUSED" caption — shown while the window has lost focus. */
+    /** Dimmed "PAUSED" overlay, shown while the window has lost focus. */
     public static void drawPausedOverlay(Graphics2D g, Font titleFont, int containerWidth, int containerHeight) {
         g.setColor(new Color(0, 0, 0, 150));
         g.fillRect(0, 0, containerWidth, containerHeight);
@@ -113,7 +104,7 @@ public final class HudRenderer {
         g.drawString(hint, (containerWidth - fm.stringWidth(hint)) / 2, y + 40);
     }
 
-    /** Full-screen game-over / level-complete overlay with a styled action button. */
+    /** Full-screen game-over or congratulations overlay with a single button. */
     public static void drawGameOverScreen(Graphics2D g, Font gameOverFont, boolean gameCompleted,
                                           Rectangle playAgainBtn, Rectangle restartBtn,
                                           int containerWidth, int containerHeight) {

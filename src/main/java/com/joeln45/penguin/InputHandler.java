@@ -1,28 +1,18 @@
 package com.joeln45.penguin;
 
 import java.awt.event.KeyEvent;
-import java.util.function.Consumer;
 
 /**
- * Tracks live keyboard input state for the game.
- *
- * <p>Maintains per-frame "is this key held?" flags so the update loop can poll
- * them without coupling to AWT events directly. The {@link Game} forwards its
- * {@code keyPressed}/{@code keyReleased} callbacks here.
- *
- * <p>Two side-effects can't naturally live as flags so they're delegated to
- * callbacks supplied at construction: pressing <kbd>Esc</kbd> exits the game,
- * pressing <kbd>B</kbd> toggles debug mode.
- *
- * @author Joel Nirmal
+ * Holds the current keyboard state so the game loop can poll it instead of
+ * reacting to AWT key events directly. Esc quits, B toggles debug overlay.
  */
 public final class InputHandler {
 
     private boolean moveLeft;
     private boolean moveRight;
-    private boolean jump;          // pending unconsumed jump request
-    private boolean jumpHeld;      // true while the jump key is physically held
-    private long    jumpPressedAt; // wall-clock ms of the most recent jump press
+    private boolean jump;
+    private boolean jumpHeld;
+    private long    jumpPressedAt;
     private boolean debug;
 
     private final Runnable onQuit;
@@ -38,7 +28,7 @@ public final class InputHandler {
     public long    jumpPressedAt() { return jumpPressedAt; }
     public boolean isDebug()     { return debug;     }
 
-    /** Consume the current jump request (returns true and clears it if one was pending). */
+    /** Clears the pending jump flag and returns true if a jump was queued. */
     public boolean consumeJump() {
         if (jump) { jump = false; return true; }
         return false;
@@ -47,9 +37,7 @@ public final class InputHandler {
     public void handleKeyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_UP -> {
-                // Treat each fresh keyboard press as a new press event (auto-repeat
-                // generates pressed+released pairs on Windows, but we only timestamp
-                // the first one).
+                // only timestamp the first press; key auto-repeat fires this again
                 if (!jumpHeld) jumpPressedAt = System.currentTimeMillis();
                 jump = true;
                 jumpHeld = true;
@@ -58,7 +46,7 @@ public final class InputHandler {
             case KeyEvent.VK_LEFT  -> moveLeft = true;
             case KeyEvent.VK_ESCAPE -> onQuit.run();
             case KeyEvent.VK_B     -> debug = !debug;
-            default -> { /* ignored */ }
+            default -> {}
         }
     }
 
@@ -68,11 +56,7 @@ public final class InputHandler {
             case KeyEvent.VK_UP, KeyEvent.VK_SPACE -> jumpHeld = false;
             case KeyEvent.VK_RIGHT -> moveRight = false;
             case KeyEvent.VK_LEFT  -> moveLeft = false;
-            default -> { /* ignored */ }
+            default -> {}
         }
     }
-
-    // Unused helper kept for completeness in case the future Pause feature wants
-    // a one-shot callback per press.
-    public static <T> Consumer<T> noop() { return t -> {}; }
 }

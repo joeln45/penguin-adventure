@@ -9,12 +9,7 @@ import com.joeln45.penguin.engine.Animation;
 import com.joeln45.penguin.engine.Sprite;
 import com.joeln45.penguin.engine.TileMap;
 
-/**
- * Owns the patrolling-dino enemies: spawning per level, movement (including
- * turn-around on wall hit), drawing, and detecting hits against the player.
- *
- * @author Joel Nirmal
- */
+/** Patrolling dino enemies. They walk left/right and turn around at walls. */
 public final class EnemyManager {
 
     private static final float ENEMY_SPEED = 0.05f;
@@ -23,7 +18,6 @@ public final class EnemyManager {
     private Animation enemyAnim;
     private boolean[] movingRight;
 
-    /** Spawn the enemies for the given level (clears any previous ones). */
     public void loadLevel(int level) {
         enemies.clear();
         enemyAnim = new Animation();
@@ -38,9 +32,10 @@ public final class EnemyManager {
             addEnemy(1000, 130);
             addEnemy(1500, 451);
         } else if (level == 3) {
-            addEnemy(384, 160);   // patrols row-6 left platform (walled by row-5 `13`s)
-            addEnemy(1050, 224);  // patrols row-8 long platform (walled by row-7 `13`s)
-            addEnemy(550, 452);   // patrols the ground
+            // left platform, long mid platform, ground
+            addEnemy(384, 160);
+            addEnemy(1050, 224);
+            addEnemy(550, 452);
         }
 
         movingRight = new boolean[enemies.size()];
@@ -48,9 +43,8 @@ public final class EnemyManager {
     }
 
     /**
-     * Per-frame enemy update: animation, wall-turn-around, player hit detection.
-     * The hit enemy is hidden so the same one can't damage the player twice in
-     * a row. Returns true if the player was struck this frame.
+     * Returns true if the player was hit this frame. The enemy that hit is
+     * hidden so it can't hit again on the next frame.
      */
     public boolean update(long elapsed, Sprite player, TileMap tmap) {
         boolean playerHit = false;

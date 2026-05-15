@@ -9,14 +9,8 @@ import com.joeln45.penguin.engine.Animation;
 import com.joeln45.penguin.engine.Sprite;
 
 /**
- * Owns the airborne hawk enemies. Hawks ignore gravity and pursue the player
- * along both axes when within {@link #VISION_RANGE} pixels (Euclidean distance).
- * Outside their vision they hold position.
- *
- * <p>Functionally similar to {@link EnemyManager} but with chase behaviour
- * instead of wall-bounded patrol, so kept as a separate class for clarity.
- *
- * @author Joel Nirmal
+ * Hawks float through the air and chase the player once they're within
+ * VISION_RANGE pixels. Outside that range they hover in place.
  */
 public final class HawkManager {
 
@@ -28,7 +22,6 @@ public final class HawkManager {
     private final List<Sprite> hawks = new ArrayList<>();
     private Animation hawkAnim;
 
-    /** Spawn the hawk(s) for the given level. */
     public void loadLevel(int level) {
         hawks.clear();
         hawkAnim = new Animation();
@@ -43,27 +36,21 @@ public final class HawkManager {
         }
     }
 
-    /**
-     * Per-frame hawk update: chase + collision. Returns true if the player
-     * was hit this frame. The struck hawk is hidden so it can't damage twice
-     * in a row.
-     */
+    /** Returns true if the player got hit this frame. */
     public boolean update(long elapsed, Sprite player) {
         boolean playerHit = false;
         for (Sprite hawk : hawks) {
             if (!hawk.isVisible()) continue;
             hawk.update(elapsed);
 
-            // Vector from hawk to player (sprite-center delta)
             float dx = (player.getX() + player.getWidth() / 2f) - (hawk.getX() + hawk.getWidth() / 2f);
             float dy = (player.getY() + player.getHeight() / 2f) - (hawk.getY() + hawk.getHeight() / 2f);
             float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
             if (dist > 0 && dist < VISION_RANGE) {
-                // Normalised pursuit vector scaled by hawk speed
+                // chase: unit vector toward the player * HAWK_SPEED
                 hawk.setSpeedX(HAWK_SPEED * dx / dist);
                 hawk.setVelocityY(HAWK_SPEED * dy / dist);
-                // Face the player horizontally
                 hawk.setScale(dx >= 0 ? 1.0f : -1.0f, 1.0f);
             } else {
                 hawk.setSpeedX(0);

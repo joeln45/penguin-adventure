@@ -8,19 +8,13 @@ import java.util.List;
 import com.joeln45.penguin.engine.Animation;
 import com.joeln45.penguin.engine.Sprite;
 
-/**
- * Owns the collectible stars: spawning per level, animating, drawing, and
- * detecting pickup against the player.
- *
- * @author Joel Nirmal
- */
+/** Manages the 3 collectible stars per level. */
 public final class CollectibleManager {
 
     private final List<Sprite> stars = new ArrayList<>();
     private Animation starAnim;
     private int starsCollected;
 
-    /** Spawn the stars for the given level (clears any previous ones). */
     public void loadLevel(int level) {
         stars.clear();
         starsCollected = 0;
@@ -36,9 +30,9 @@ public final class CollectibleManager {
             addStar(1050, 70);
             addStar(1380, 375);
         } else if (level == 3) {
-            addStar(960, 224);    // easy — centre of long row-8 mid platform
-            addStar(384, 160);    // medium — centre of left row-6 platform
-            addStar(1184, 160);   // hard — centre of right row-6 platform
+            addStar(960, 224);
+            addStar(384, 160);
+            addStar(1184, 160);
         }
     }
 
@@ -50,10 +44,7 @@ public final class CollectibleManager {
 
     public boolean allCollected() { return starsCollected >= total(); }
 
-    /**
-     * Per-frame animation + pickup detection. Plays the coin sound on pickup.
-     * @return the number of stars picked up this frame
-     */
+    /** Returns the number of stars picked up this frame. */
     public int update(long elapsed, Sprite player) {
         int picked = 0;
         for (int i = stars.size() - 1; i >= 0; i--) {
